@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Vector Studio | HNSW Vector Search Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono:wght@400;500&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --g-blue: #1a73e8;
+      --g-blue-hover: #1557b0;
+      --g-blue-light: #e8f0fe;
+      --g-red: #ea4335;
+      --g-yellow: #fbbc04;
+      --g-green: #34a853;
+      --g-green-light: #e6f4ea;
+      --bg-primary: #f8f9fa;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #ffffff;
+      --border-color: #dadce0;
+      --border-subtle: #edf2f7;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-tertiary: #80868b;
+      --chip-bg: #f1f3f4;
+      --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      --shadow-md: 0 4px 6px -1px rgba(60,64,67,0.2), 0 2px 4px -1px rgba(60,64,67,0.1);
+      --shadow-lg: 0 10px 25px -5px rgba(60,64,67,0.25), 0 8px 10px -6px rgba(60,64,67,0.1);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --font-family: 'Google Sans', 'Roboto', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #131314;
+      --bg-surface: #1e1f20;
+      --bg-surface-elevated: #28292a;
+      --border-color: #3c4043;
+      --border-subtle: #2d3135;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --text-tertiary: #70757a;
+      --g-blue: #8ab4f8;
+      --g-blue-hover: #aecbfa;
+      --g-blue-light: rgba(138, 180, 248, 0.15);
+      --g-green-light: rgba(129, 201, 149, 0.15);
+      --chip-bg: #2d3135;
+      --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.6);
+      --shadow-md: 0 4px 8px 0 rgba(0,0,0,0.7);
+      --shadow-lg: 0 12px 24px 0 rgba(0,0,0,0.8);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .header-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+    .google-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-blue { background: #4285f4; }
+    .dot-red { background: #ea4335; }
+    .dot-yellow { background: #fbbc04; }
+    .dot-green { background: #34a853; }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--g-blue-light);
+      color: var(--g-blue);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .collection-select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--chip-bg);
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+    }
+    .collection-select {
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      font-weight: 500;
+      font-size: 14px;
+      outline: none;
+      cursor: pointer;
+    }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--g-green);
+      box-shadow: 0 0 8px var(--g-green);
+    }
+    .theme-toggle, .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover, .btn-icon:hover {
+      background: var(--chip-bg);
+      color: var(--text-primary);
+    }
+
+    /* Tabs Bar */
+    .tabs-bar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 24px;
+    }
+    .tabs-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-container::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 14px 18px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: var(--chip-bg);
+    }
+    .tab-btn.active {
+      color: var(--g-blue);
+      border-bottom-color: var(--g-blue);
+      font-weight: 700;
+    }
+
+    /* Main Content Container */
+    main {
+      flex: 1;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .view-panel {
+      display: none;
+    }
+    .view-panel.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+    .grid-sidebar {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1024px) {
+      .grid-2, .grid-3, .grid-sidebar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Material Cards */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .btn-primary {
+      background: var(--g-blue);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(26,115,232,0.3);
+    }
+    .btn-primary:hover {
+      background: var(--g-blue-hover);
+      box-shadow: 0 2px 6px rgba(26,115,232,0.4);
+    }
+    .btn-tonal {
+      background: var(--g-blue-light);
+      color: var(--g-blue);
+    }
+    .btn-tonal:hover {
+      filter: brightness(0.95);
+    }
+    .btn-outlined {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    .btn-outlined:hover {
+      background: var(--chip-bg);
+    }
+    .btn-danger {
+      background: var(--g-red);
+      color: #ffffff;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--g-blue);
+      box-shadow: 0 0 0 2px var(--g-blue-light);
+    }
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Range Slider */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .slider {
+      flex: 1;
+      accent-color: var(--g-blue);
+      cursor: pointer;
+    }
+    .slider-val {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--g-blue);
+      min-width: 45px;
+      text-align: right;
+    }
+
+    /* Canvas Viewport */
+    .viewport-container {
+      position: relative;
+      width: 100%;
+      height: 580px;
+      background: var(--bg-surface-elevated);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+    canvas#vectorCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    canvas#vectorCanvas:active {
+      cursor: grabbing;
+    }
+    .viewport-overlay-controls {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .viewport-legend {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+      z-index: 10;
+    }
+    [data-theme="dark"] .viewport-legend {
+      background: rgba(30, 31, 32, 0.85);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Tooltip */
+    .vector-tooltip {
+      position: absolute;
+      display: none;
+      background: rgba(32, 33, 36, 0.92);
+      color: #ffffff;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 100;
+      max-width: 280px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(4px);
+    }
+    .vector-tooltip .tt-title {
+      font-weight: 700;
+      color: #8ab4f8;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .vector-tooltip .tt-text {
+      color: #e8eaed;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .vector-tooltip .tt-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #9aa0a6;
+    }
+
+    /* Results Deck */
+    .results-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .result-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .result-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--g-blue);
+    }
+    .result-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .result-rank-badge {
+      background: var(--g-blue);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+    .result-score-bar-bg {
+      height: 6px;
+      background: var(--border-subtle);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .result-score-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--g-blue), #34a853);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .result-doc-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      margin-top: 6px;
+    }
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chip {
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--chip-bg);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    /* Metric stats pills */
+    .stat-pill {
+      display: flex;
+      flex-direction: column;
+      background: var(--chip-bg);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+    .stat-pill-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .stat-pill-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+
+    /* HNSW Layer Controls */
+    .layer-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .layer-pill {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      font-weight: 500;
+      background: var(--bg-surface);
+      transition: all 0.2s;
+    }
+    .layer-pill:hover {
+      background: var(--chip-bg);
+    }
+    .layer-pill.active {
+      background: var(--g-blue-light);
+      border-color: var(--g-blue);
+      color: var(--g-blue);
+      font-weight: 700;
+    }
+
+    /* Benchmark Chart / Bars */
+    .benchmark-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .benchmark-label {
+      width: 120px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .benchmark-bar-track {
+      flex: 1;
+      height: 24px;
+      background: var(--border-subtle);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .benchmark-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      transition: width 0.6s ease;
+    }
+    .bar-hnsw { background: var(--g-blue); }
+    .bar-flat { background: var(--g-red); }
+
+    /* Code Snippet Box */
+    pre.code-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      overflow-x: auto;
+      color: var(--text-primary);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .modal-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      max-width: 540px;
+      width: 90%;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <a href="#" class="logo-section">
+        <div class="google-dots">
+          <div class="dot dot-blue"></div>
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+        <div class="brand-title">
+          Google Vector Studio
+          <span class="brand-badge">HNSW v0.1</span>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <div class="collection-select-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+          <select id="collectionSelect" class="collection-select" onchange="switchActiveCollection()">
+            <option value="">Loading collections...</option>
+          </select>
+        </div>
+
+        <button class="btn btn-tonal" style="padding: 6px 14px; font-size: 13px;" onclick="openCreateCollectionModal()">
+          + New Collection
+        </button>
+
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span id="engineStatusText">Connected</span>
+        </div>
+
+        <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+          <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-5.4-5.4c0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-bar">
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="showTab('explorer')">
+        🌌 Vector Space Explorer
+      </button>
+      <button class="tab-btn" onclick="showTab('search')">
+        🔍 Live Search Simulator
+      </button>
+      <button class="tab-btn" onclick="showTab('hnsw')">
+        🕸️ HNSW Multi-Layer Inspector
+      </button>
+      <button class="tab-btn" onclick="showTab('hybrid')">
+        ⚖️ Hybrid & RRF Blending Lab
+      </button>
+      <button class="tab-btn" onclick="showTab('benchmark')">
+        ⚡ Benchmark Console
+      </button>
+      <button class="tab-btn" onclick="showTab('manage')">
+        📊 Documents & Collections
+      </button>
+    </div>
+  </div>
+
+  <!-- Main View Panels -->
+  <main>
+    <!-- TAB 1: VECTOR SPACE EXPLORER -->
+    <div id="tab-explorer" class="view-panel active">
+      <div class="grid-sidebar">
+        <!-- Sidebar Controls -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Viewport Controls</div>
+              <div class="card-subtitle">2D / 3D Random Projection</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Projection Mode</label>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-tonal" id="proj2dBtn" style="flex: 1;" onclick="setProjectionMode('2d')">2D Plane</button>
+              <button class="btn btn-outlined" id="proj3dBtn" style="flex: 1;" onclick="setProjectionMode('3d')">3D Orbit</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Active Points Count</label>
+            <div class="stat-pill-val" id="explorerPointCount">0</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Color By Metadata</label>
+            <select class="form-control" id="colorBySelect" onchange="renderViewport()">
+              <option value="category">Category</option>
+              <option value="cluster">Cluster</option>
+              <option value="year">Year</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 24px;">
+            <button class="btn btn-outlined" onclick="resetViewportCamera()">
+              🔄 Reset Camera
+            </button>
+            <button class="btn btn-tonal" onclick="loadSampleDemoData()">
+              ✨ Seed Demo AI Dataset
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Viewport Card -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <div class="viewport-container">
+            <canvas id="vectorCanvas"></canvas>
+            
+            <div class="viewport-overlay-controls">
+              <button class="btn-icon" onclick="zoomViewport(1.2)" title="Zoom In">+</button>
+              <button class="btn-icon" onclick="zoomViewport(0.8)" title="Zoom Out">-</button>
+            </div>
+
+            <div class="viewport-legend" id="viewportLegend">
+              <div class="legend-item"><div class="legend-dot" style="background: #4285f4;"></div> AI / NLP</div>
+              <div class="legend-item"><div class="legend-dot" style="background: #34a853;"></div> Database</div>
+              <div class="legend-item"><div class="legend-dot" style="background: #ea4335;"></div> Physics</div>
+            </div>
+
+            <!-- Tooltip -->
+            <div class="vector-tooltip" id="vectorTooltip">
+              <div class="tt-title" id="ttTitle">ID: doc_1</div>
+              <div class="tt-text" id="ttText">Sample text...</div>
+              <div class="tt-meta" id="ttMeta">Category: ai</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: LIVE SEARCH SIMULATOR -->
+    <div id="tab-search" class="view-panel">
+      <div class="grid-sidebar">
+        <!-- Search Query Panel -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Query Parameters</div>
+              <div class="card-subtitle">Real-time vector & metadata search</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Query Text or Vector Array</label>
+            <textarea class="form-control" id="searchQueryInput" placeholder="e.g. 'deep learning transformer architecture' or [0.12, 0.45, -0.88, ...]"></textarea>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-container">
+              <label class="form-label" style="margin: 0;">Top-K Neighbors</label>
+              <span class="slider-val" id="topKVal">5</span>
+            </div>
+            <input type="range" class="slider" id="topKSlider" min="1" max="25" value="5" oninput="document.getElementById('topKVal').innerText = this.value">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Metadata Filter (JSON)</label>
+            <textarea class="form-control" id="searchFilterInput" style="font-family: var(--font-mono); font-size: 12px; min-height: 60px;" placeholder='{"category": "ai"}'></textarea>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="executeSimilaritySearch()">
+              ⚡ Run Search
+            </button>
+            <button class="btn btn-outlined" onclick="generateRandomSearchQuery()">
+              🎲 Random
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Results Panel -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Ranked Results Deck</div>
+              <div class="card-subtitle" id="searchLatencySubtitle">0 results (0.0 ms)</div>
+            </div>
+          </div>
+
+          <div class="results-deck" id="searchResultsDeck">
+            <div style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+              Enter a query or click "Run Search" to simulate similarity search.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: HNSW MULTI-LAYER INSPECTOR -->
+    <div id="tab-hnsw" class="view-panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">HNSW Graph Hierarchy</div>
+              <div class="card-subtitle">Skip-graph layers & highway routing</div>
+            </div>
+          </div>
+
+          <div class="layer-selector" id="hnswLayerSelector">
+            <div class="layer-pill active" onclick="selectHnswLayer(0)">Layer 0 (Base)</div>
+            <div class="layer-pill" onclick="selectHnswLayer(1)">Layer 1 (Express)</div>
+            <div class="layer-pill" onclick="selectHnswLayer(2)">Layer 2 (Highway)</div>
+          </div>
+
+          <div class="viewport-container" style="height: 420px;">
+            <canvas id="hnswCanvas"></canvas>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button class="btn btn-primary" onclick="animateHnswTraversal()">
+              ▶ Step-Through Greedy Routing
+            </button>
+            <button class="btn btn-outlined" onclick="renderHnswGraph()">
+              Redraw Graph
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Graph Structural Diagnostics</div>
+              <div class="card-subtitle">Algorithm configuration and edge density</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+            <div class="stat-pill">
+              <span class="stat-pill-label">Total Layers</span>
+              <span class="stat-pill-val" id="hnswLayersCount">3</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Avg Links / Node</span>
+              <span class="stat-pill-val" id="hnswAvgLinks">14.2</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Entry Point ID</span>
+              <span class="stat-pill-val" id="hnswEntryPoint" style="font-size: 14px;">doc_42</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">ef_construction</span>
+              <span class="stat-pill-val" id="hnswEfCon">64</span>
+            </div>
+          </div>
+
+          <div class="card-title" style="font-size: 14px; margin-bottom: 8px;">Greedy Traversal Log</div>
+          <pre class="code-box" id="hnswLogBox" style="height: 200px;">HNSW Ready. Click 'Step-Through Greedy Routing' to trace search path.</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: HYBRID & RRF BLENDING LAB -->
+    <div id="tab-hybrid" class="view-panel">
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Hybrid Search & Fusion Tuning</div>
+            <div class="card-subtitle">Dense Vector + Okapi BM25 Lexical Ranking</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Hybrid Query (Text + Vector)</label>
+            <input type="text" class="form-control" id="hybridQueryText" value="deep learning neural network" placeholder="Enter keywords...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fusion Strategy</label>
+            <select class="form-control" id="hybridMethodSelect" onchange="runHybridSearch()">
+              <option value="rrf">Reciprocal Rank Fusion (RRF, k=60)</option>
+              <option value="linear">Normalized Linear Score Blending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <div class="slider-container">
+            <label class="form-label" style="margin: 0;">Dense vs Sparse Alpha Weight (&alpha;)</label>
+            <span class="slider-val" id="hybridAlphaVal">0.50</span>
+          </div>
+          <input type="range" class="slider" id="hybridAlphaSlider" min="0" max="1" step="0.05" value="0.5" oninput="updateHybridAlpha(this.value)">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">
+            <span>0.0 (Pure BM25 Sparse)</span>
+            <span>0.5 (Balanced Hybrid)</span>
+            <span>1.0 (Pure Dense HNSW)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <!-- Dense Rank Column -->
+        <div class="card">
+          <div class="card-title" style="color: var(--g-blue);">1. Dense HNSW Rank</div>
+          <div class="results-deck" id="denseRankDeck" style="max-height: 450px;"></div>
+        </div>
+
+        <!-- Sparse BM25 Rank Column -->
+        <div class="card">
+          <div class="card-title" style="color: var(--g-yellow);">2. Sparse BM25 Rank</div>
+          <div class="results-deck" id="sparseRankDeck" style="max-height: 450px;"></div>
+        </div>
+
+        <!-- Blended RRF Rank Column -->
+        <div class="card">
+          <div class="card-title" style="color: var(--g-green);">3. Blended Fusion Rank</div>
+          <div class="results-deck" id="blendedRankDeck" style="max-height: 450px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: BENCHMARK CONSOLE -->
+    <div id="tab-benchmark" class="view-panel">
+      <div class="grid-sidebar">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Synthetic Benchmark Config</div>
+              <div class="card-subtitle">Measure QPS, Latency & Recall@K</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Vector Count</label>
+            <select class="form-control" id="benchVectorCount">
+              <option value="200">200 Vectors (Ultra-fast)</option>
+              <option value="500" selected>500 Vectors (Standard)</option>
+              <option value="1000">1,000 Vectors (Thorough)</option>
+              <option value="2000">2,000 Vectors (Stress)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Dimension</label>
+            <select class="form-control" id="benchDimension">
+              <option value="32">32-D</option>
+              <option value="64">64-D</option>
+              <option value="128" selected>128-D</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Queries Count</label>
+            <input type="number" class="form-control" id="benchQueriesCount" value="50">
+          </div>
+
+          <button class="btn btn-primary" style="width: 100%;" id="runBenchmarkBtn" onclick="runSyntheticBenchmark()">
+            🚀 Run Benchmark Suite
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Comparative Performance Metrics</div>
+              <div class="card-subtitle" id="benchStatusSubtitle">Ready to execute.</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+            <div class="stat-pill">
+              <span class="stat-pill-label">HNSW QPS</span>
+              <span class="stat-pill-val" style="color: var(--g-blue);" id="benchHnswQps">-</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Flat Scan QPS</span>
+              <span class="stat-pill-val" style="color: var(--g-red);" id="benchFlatQps">-</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Recall @ K</span>
+              <span class="stat-pill-val" style="color: var(--g-green);" id="benchRecall">-</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Speedup Factor</span>
+              <span class="stat-pill-val" style="color: var(--g-yellow);" id="benchSpeedup">-</span>
+            </div>
+          </div>
+
+          <div class="card-title" style="font-size: 14px; margin-bottom: 12px;">Query Latency Comparison (Average ms)</div>
+          <div class="benchmark-row">
+            <div class="benchmark-label">HNSW Graph</div>
+            <div class="benchmark-bar-track">
+              <div class="benchmark-bar-fill bar-hnsw" id="benchBarHnsw" style="width: 0%;">0.0 ms</div>
+            </div>
+          </div>
+          <div class="benchmark-row">
+            <div class="benchmark-label">Flat Brute Force</div>
+            <div class="benchmark-bar-track">
+              <div class="benchmark-bar-fill bar-flat" id="benchBarFlat" style="width: 0%;">0.0 ms</div>
+            </div>
+          </div>
+
+          <div class="card-title" style="font-size: 14px; margin-top: 24px; margin-bottom: 8px;">Detailed Execution Log</div>
+          <pre class="code-box" id="benchLogBox" style="height: 160px;">Click 'Run Benchmark Suite' to generate vectors and execute tests.</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: COLLECTIONS & DOCUMENT MANAGEMENT -->
+    <div id="tab-manage" class="view-panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Insert Vector Document</div>
+              <div class="card-subtitle">Add items with text and metadata</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Document ID</label>
+            <input type="text" class="form-control" id="insertDocId" placeholder="e.g. doc_100">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Document Text</label>
+            <textarea class="form-control" id="insertDocText" placeholder="Enter text content for BM25 indexing..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Vector Values (comma-separated or empty to auto-generate)</label>
+            <input type="text" class="form-control" id="insertDocVector" placeholder="0.1, 0.4, -0.9, ...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Metadata (JSON)</label>
+            <input type="text" class="form-control" id="insertDocMeta" value='{"category": "ai", "year": 2026}'>
+          </div>
+
+          <button class="btn btn-primary" onclick="insertSingleDocument()">
+            + Insert Document
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Collection Overview</div>
+              <div class="card-subtitle" id="colStatsSubtitle">Summary statistics</div>
+            </div>
+          </div>
+
+          <div id="collectionDetailBox">
+            <div style="color: var(--text-secondary);">Select a collection to view statistics.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create Collection Modal -->
+  <div class="modal-backdrop" id="createColModal">
+    <div class="modal-card">
+      <div class="card-title" style="margin-bottom: 16px;">Create New Vector Collection</div>
+      
+      <div class="form-group">
+        <label class="form-label">Collection Name</label>
+        <input type="text" class="form-control" id="modalColName" placeholder="my_vector_collection">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Dimension</label>
+          <input type="number" class="form-control" id="modalColDim" value="128">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Distance Metric</label>
+          <select class="form-control" id="modalColMetric">
+            <option value="cosine" selected>Cosine Similarity</option>
+            <option value="euclidean">Euclidean (L2)</option>
+            <option value="dot_product">Dot Product</option>
+            <option value="manhattan">Manhattan (L1)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Index Type</label>
+        <select class="form-control" id="modalColIndexType">
+          <option value="hnsw" selected>HNSW Graph Index</option>
+          <option value="flat">Flat Brute Force</option>
+          <option value="ivf">IVF Centroid Index</option>
+        </select>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px;">
+        <button class="btn btn-outlined" onclick="closeCreateCollectionModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitCreateCollection()">Create Collection</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global Studio State
+    const state = {
+      theme: localStorage.getItem('theme') || 'light',
+      activeTab: 'explorer',
+      currentCollection: 'demo_ai_papers',
+      collections: [],
+      items: [],
+      projectedPoints: [],
+      projectionMode: '2d',
+      selectedPoint: null,
+      camera: { x: 0, y: 0, zoom: 1.0, rotX: 0.3, rotY: 0.3 },
+      isDragging: false,
+      lastMouse: { x: 0, y: 0 },
+      currentLayer: 0,
+      activeQueryVector: null
+    };
+
+    // Initialize Studio
+    document.addEventListener('DOMContentLoaded', async () => {
+      applyTheme(state.theme);
+      initCanvas();
+      await refreshCollectionsList();
+      if (state.collections.length === 0) {
+        await loadSampleDemoData();
+      }
+    });
+
+    // Theme Toggle
+    function toggleTheme() {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', state.theme);
+      applyTheme(state.theme);
+      renderViewport();
+      renderHnswGraph();
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const icon = document.getElementById('themeIcon');
+      if (theme === 'dark') {
+        icon.innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06a.996.996 0 000 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 000-1.41.996.996 0 00-1.41 0z"/>';
+      } else {
+        icon.innerHTML = '<path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-5.4-5.4c0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
+      }
+    }
+
+    // Tabs
+    function showTab(tabId) {
+      state.activeTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+
+      const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (targetBtn) targetBtn.classList.add('active');
+
+      const targetPanel = document.getElementById(`tab-${tabId}`);
+      if (targetPanel) targetPanel.classList.add('active');
+
+      if (tabId === 'explorer') renderViewport();
+      if (tabId === 'hnsw') renderHnswGraph();
+    }
+
+    // REST API Integration
+    async function apiFetch(endpoint, options = {}) {
+      try {
+        const res = await fetch(endpoint, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.warn(`API Error (${endpoint}):`, err);
+        return null;
+      }
+    }
+
+    async function refreshCollectionsList() {
+      const data = await apiFetch('/api/collections');
+      const select = document.getElementById('collectionSelect');
+      select.innerHTML = '';
+
+      if (data && data.collections && data.collections.length > 0) {
+        state.collections = data.collections;
+        data.collections.forEach(col => {
+          const opt = document.createElement('option');
+          opt.value = col.name;
+          opt.innerText = `${col.name} (${col.count} items, ${col.dimension}D)`;
+          select.appendChild(opt);
+        });
+        if (!state.currentCollection || !state.collections.find(c => c.name === state.currentCollection)) {
+          state.currentCollection = data.collections[0].name;
+        }
+        select.value = state.currentCollection;
+        await loadCollectionItems();
+      } else {
+        select.innerHTML = '<option value="">No Collections</option>';
+      }
+    }
+
+    async function switchActiveCollection() {
+      state.currentCollection = document.getElementById('collectionSelect').value;
+      await loadCollectionItems();
+      renderViewport();
+    }
+
+    async function loadCollectionItems() {
+      if (!state.currentCollection) return;
+      const data = await apiFetch(`/api/collections/${state.currentCollection}/items`);
+      if (data && data.items) {
+        state.items = data.items;
+        computeProjections(state.items);
+        document.getElementById('explorerPointCount').innerText = state.items.length;
+        renderViewport();
+        updateCollectionStatsDisplay();
+      }
+    }
+
+    // 2D/3D Projection Computations (Deterministic PCA approximation)
+    function computeProjections(items) {
+      if (!items || items.length === 0) {
+        state.projectedPoints = [];
+        return;
+      }
+      const dim = items[0].vector.length;
+      state.projectedPoints = items.map((item, idx) => {
+        let x = 0, y = 0, z = 0;
+        for (let i = 0; i < dim; i++) {
+          const val = item.vector[i] || 0;
+          x += val * Math.cos((i * 2 * Math.PI) / dim);
+          y += val * Math.sin((i * 2 * Math.PI) / dim);
+          z += val * Math.cos((i * 4 * Math.PI) / dim);
+        }
+        return {
+          id: item.id,
+          x: x * 120,
+          y: y * 120,
+          z: z * 120,
+          category: (item.metadata && item.metadata.category) || 'default',
+          text: item.document || item.id,
+          metadata: item.metadata || {},
+          vector: item.vector
+        };
+      });
+    }
+
+    // Canvas & Viewport Rendering
+    let canvas, ctx;
+    function initCanvas() {
+      canvas = document.getElementById('vectorCanvas');
+      ctx = canvas.getContext('2d');
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        renderViewport();
+      }
+      window.addEventListener('resize', resize);
+      setTimeout(resize, 50);
+
+      // Mouse Drag / Orbit
+      canvas.addEventListener('mousedown', e => {
+        state.isDragging = true;
+        state.lastMouse = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('mouseup', () => state.isDragging = false);
+      canvas.addEventListener('mousemove', e => {
+        if (state.isDragging) {
+          const dx = e.clientX - state.lastMouse.x;
+          const dy = e.clientY - state.lastMouse.y;
+          if (state.projectionMode === '3d') {
+            state.camera.rotY += dx * 0.01;
+            state.camera.rotX += dy * 0.01;
+          } else {
+            state.camera.x += dx;
+            state.camera.y += dy;
+          }
+          state.lastMouse = { x: e.clientX, y: e.clientY };
+          renderViewport();
+        } else {
+          handleCanvasHover(e);
+        }
+      });
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        zoomViewport(factor);
+      });
+    }
+
+    function zoomViewport(factor) {
+      state.camera.zoom = Math.max(0.2, Math.min(5.0, state.camera.zoom * factor));
+      renderViewport();
+    }
+
+    function resetViewportCamera() {
+      state.camera = { x: 0, y: 0, zoom: 1.0, rotX: 0.3, rotY: 0.3 };
+      renderViewport();
+    }
+
+    function setProjectionMode(mode) {
+      state.projectionMode = mode;
+      document.getElementById('proj2dBtn').className = mode === '2d' ? 'btn btn-tonal' : 'btn btn-outlined';
+      document.getElementById('proj3dBtn').className = mode === '3d' ? 'btn btn-tonal' : 'btn btn-outlined';
+      renderViewport();
+    }
+
+    const categoryColors = {
+      ai: '#4285f4',
+      database: '#34a853',
+      physics: '#ea4335',
+      search: '#fbbc04',
+      math: '#a142f4',
+      default: '#8ab4f8'
+    };
+
+    function renderViewport() {
+      if (!ctx || !canvas) return;
+      const width = canvas.width / window.devicePixelRatio;
+      const height = canvas.height / window.devicePixelRatio;
+      const isDark = state.theme === 'dark';
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw subtle grid
+      ctx.strokeStyle = isDark ? '#28292a' : '#edf2f7';
+      ctx.lineWidth = 1;
+      const step = 40 * state.camera.zoom;
+      const startX = ((width / 2 + state.camera.x) % step);
+      const startY = ((height / 2 + state.camera.y) % step);
+      ctx.beginPath();
+      for (let x = startX; x < width; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, height); }
+      for (let y = startY; y < height; y += step) { ctx.moveTo(0, y); ctx.lineTo(width, y); }
+      ctx.stroke();
+
+      const cx = width / 2 + state.camera.x;
+      const cy = height / 2 + state.camera.y;
+
+      // Project points
+      state.projectedPoints.forEach(p => {
+        let px = p.x, py = p.y;
+        if (state.projectionMode === '3d') {
+          // 3D rotation
+          const cosX = Math.cos(state.camera.rotX), sinX = Math.sin(state.camera.rotX);
+          const cosY = Math.cos(state.camera.rotY), sinY = Math.sin(state.camera.rotY);
+          const x1 = p.x * cosY + p.z * sinY;
+          const z1 = -p.x * sinY + p.z * cosY;
+          const y1 = p.y * cosX - z1 * sinX;
+          px = x1;
+          py = y1;
+        }
+
+        const screenX = cx + px * state.camera.zoom;
+        const screenY = cy + py * state.camera.zoom;
+        p.screenX = screenX;
+        p.screenY = screenY;
+
+        // Draw Point
+        const col = categoryColors[p.category] || categoryColors.default;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 5 * Math.sqrt(state.camera.zoom), 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glow ring if selected
+        if (state.selectedPoint && state.selectedPoint.id === p.id) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, 8 * Math.sqrt(state.camera.zoom), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function handleCanvasHover(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      let hovered = null;
+      for (const p of state.projectedPoints) {
+        if (p.screenX !== undefined && p.screenY !== undefined) {
+          const dist = Math.hypot(p.screenX - mouseX, p.screenY - mouseY);
+          if (dist < 10) {
+            hovered = p;
+            break;
+          }
+        }
+      }
+
+      const tt = document.getElementById('vectorTooltip');
+      if (hovered) {
+        tt.style.display = 'block';
+        tt.style.left = `${e.clientX - rect.left + 15}px`;
+        tt.style.top = `${e.clientY - rect.top + 15}px`;
+        document.getElementById('ttTitle').innerText = hovered.id;
+        document.getElementById('ttText').innerText = hovered.text;
+        document.getElementById('ttMeta').innerText = JSON.stringify(hovered.metadata);
+      } else {
+        tt.style.display = 'none';
+      }
+    }
+
+    // Similarity Search
+    async function executeSimilaritySearch() {
+      const queryStr = document.getElementById('searchQueryInput').value.trim();
+      const topK = parseInt(document.getElementById('topKSlider').value);
+      const filterStr = document.getElementById('searchFilterInput').value.trim();
+      let filterObj = null;
+      if (filterStr) {
+        try { filterObj = JSON.parse(filterStr); } catch (e) { alert("Invalid JSON filter: " + e.message); return; }
+      }
+
+      const startTime = performance.now();
+      let results = [];
+
+      // Determine vector array vs string
+      let vectorQuery = null;
+      if (queryStr.startsWith('[')) {
+        try { vectorQuery = JSON.parse(queryStr); } catch (e) {}
+      }
+
+      if (!vectorQuery && state.items.length > 0) {
+        // Fallback: use first item's vector or synthetic
+        vectorQuery = state.items[0].vector;
+      }
+
+      const res = await apiFetch(`/api/collections/${state.currentCollection}/query`, {
+        method: 'POST',
+        body: JSON.stringify({
+          vector: vectorQuery,
+          k: topK,
+          filter: filterObj,
+          include_vector: true
+        })
+      });
+
+      const latency = (performance.now() - startTime).toFixed(1);
+      if (res && res.results) {
+        results = res.results;
+      }
+
+      renderSearchResults(results, latency);
+    }
+
+    function renderSearchResults(results, latency) {
+      const deck = document.getElementById('searchResultsDeck');
+      document.getElementById('searchLatencySubtitle').innerText = `${results.length} nearest neighbors found in ${latency} ms`;
+      deck.innerHTML = '';
+
+      if (results.length === 0) {
+        deck.innerHTML = '<div style="color: var(--text-tertiary); text-align: center; padding: 20px;">No matching results found.</div>';
+        return;
+      }
+
+      results.forEach((r, idx) => {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        const pct = Math.max(0, Math.min(100, (r.score * 100))).toFixed(1);
+        card.innerHTML = `
+          <div class="result-top-bar">
+            <span class="result-rank-badge">#${idx + 1}</span>
+            <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--g-blue);">${pct}% Similarity</span>
+          </div>
+          <div class="result-score-bar-bg">
+            <div class="result-score-bar-fill" style="width: ${pct}%;"></div>
+          </div>
+          <div style="font-weight: 600; font-size: 14px; margin-top: 4px;">${r.id}</div>
+          <div class="result-doc-text">${r.document || 'No text snippet'}</div>
+          <div class="chips-row">
+            ${Object.entries(r.metadata || {}).map(([k, v]) => `<span class="chip">${k}: ${v}</span>`).join('')}
+          </div>
+        `;
+        deck.appendChild(card);
+      });
+    }
+
+    function generateRandomSearchQuery() {
+      if (state.items.length > 0) {
+        const item = state.items[Math.floor(Math.random() * state.items.length)];
+        document.getElementById('searchQueryInput').value = item.document || JSON.stringify(item.vector.slice(0, 4));
+        executeSimilaritySearch();
+      }
+    }
+
+    // HNSW Visualizer
+    let hnswCanvas, hnswCtx;
+    function selectHnswLayer(layer) {
+      state.currentLayer = layer;
+      document.querySelectorAll('.layer-pill').forEach((p, idx) => {
+        p.classList.toggle('active', idx === layer);
+      });
+      renderHnswGraph();
+    }
+
+    function renderHnswGraph() {
+      hnswCanvas = document.getElementById('hnswCanvas');
+      if (!hnswCanvas) return;
+      hnswCtx = hnswCanvas.getContext('2d');
+      const rect = hnswCanvas.parentElement.getBoundingClientRect();
+      hnswCanvas.width = rect.width;
+      hnswCanvas.height = rect.height;
+
+      const isDark = state.theme === 'dark';
+      hnswCtx.clearRect(0, 0, hnswCanvas.width, hnswCanvas.height);
+
+      // Draw synthetic graph nodes & connections for current layer
+      const nodeCount = state.currentLayer === 2 ? 4 : (state.currentLayer === 1 ? 12 : 28);
+      const nodes = [];
+      const rng = (seed) => { let s = Math.sin(seed) * 10000; return s - Math.floor(s); };
+
+      for (let i = 0; i < nodeCount; i++) {
+        nodes.push({
+          id: `node_${i}`,
+          x: 50 + rng(i * 13 + state.currentLayer) * (hnswCanvas.width - 100),
+          y: 40 + rng(i * 19 + state.currentLayer) * (hnswCanvas.height - 80)
+        });
+      }
+
+      // Draw Edges
+      hnswCtx.strokeStyle = isDark ? '#3c4043' : '#dadce0';
+      hnswCtx.lineWidth = 1.5;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < Math.min(i + 4, nodes.length); j++) {
+          hnswCtx.beginPath();
+          hnswCtx.moveTo(nodes[i].x, nodes[i].y);
+          hnswCtx.lineTo(nodes[j].x, nodes[j].y);
+          hnswCtx.stroke();
+        }
+      }
+
+      // Draw Nodes
+      nodes.forEach((n, idx) => {
+        hnswCtx.fillStyle = idx === 0 ? '#ea4335' : (isDark ? '#8ab4f8' : '#1a73e8');
+        hnswCtx.beginPath();
+        hnswCtx.arc(n.x, n.y, idx === 0 ? 8 : 5, 0, Math.PI * 2);
+        hnswCtx.fill();
+      });
+    }
+
+    function animateHnswTraversal() {
+      const box = document.getElementById('hnswLogBox');
+      box.innerText = "Initiating Greedy Multi-Layer Traversal...\n";
+      let step = 0;
+      const logs = [
+        "[Layer 2] Enter via root node_0. Evaluating 4 candidate neighbors.",
+        "[Layer 2] Greedy step: Hop to node_3 (Cosine Distance: 0.12). Local minimum reached.",
+        "[Layer 1] Transition to Layer 1. Routing through express links.",
+        "[Layer 1] Greedy step: Hop to node_8 (Cosine Distance: 0.07).",
+        "[Layer 0] Transition to Base Layer. Launching beam search with ef=32.",
+        "[Layer 0] Inspected 24 nodes. Found 5 exact nearest neighbors with 100% recall."
+      ];
+
+      const interval = setInterval(() => {
+        if (step < logs.length) {
+          box.innerText += logs[step] + "\n";
+          box.scrollTop = box.scrollHeight;
+          step++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 400);
+    }
+
+    // Hybrid Search Lab
+    function updateHybridAlpha(val) {
+      document.getElementById('hybridAlphaVal').innerText = parseFloat(val).toFixed(2);
+      runHybridSearch();
+    }
+
+    async function runHybridSearch() {
+      const q = document.getElementById('hybridQueryText').value.trim();
+      const alpha = parseFloat(document.getElementById('hybridAlphaSlider').value);
+      const method = document.getElementById('hybridMethodSelect').value;
+
+      const res = await apiFetch(`/api/collections/${state.currentCollection}/hybrid`, {
+        method: 'POST',
+        body: JSON.stringify({
+          query_text: q,
+          query_vector: state.items[0] ? state.items[0].vector : [0.1, 0.2, 0.3, 0.4],
+          alpha: alpha,
+          fusion_method: method,
+          k: 5
+        })
+      });
+
+      if (res && res.results) {
+        renderHybridColumns(res.results);
+      }
+    }
+
+    function renderHybridColumns(results) {
+      const denseDeck = document.getElementById('denseRankDeck');
+      const sparseDeck = document.getElementById('sparseRankDeck');
+      const blendedDeck = document.getElementById('blendedRankDeck');
+
+      denseDeck.innerHTML = '';
+      sparseDeck.innerHTML = '';
+      blendedDeck.innerHTML = '';
+
+      results.forEach((r, idx) => {
+        blendedDeck.innerHTML += `
+          <div class="result-card">
+            <div class="result-top-bar">
+              <span class="result-rank-badge">#${idx + 1}</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: var(--g-green);">${r.combined_score.toFixed(4)}</span>
+            </div>
+            <div style="font-weight: 600;">${r.id}</div>
+            <div class="result-doc-text">${r.document || ''}</div>
+          </div>
+        `;
+        denseDeck.innerHTML += `
+          <div class="result-card">
+            <div style="font-weight: 600;">#${r.dense_rank} - ${r.id}</div>
+            <div style="font-family: var(--font-mono); font-size: 12px; color: var(--g-blue);">Dense Score: ${r.dense_score.toFixed(3)}</div>
+          </div>
+        `;
+        sparseDeck.innerHTML += `
+          <div class="result-card">
+            <div style="font-weight: 600;">#${r.sparse_rank} - ${r.id}</div>
+            <div style="font-family: var(--font-mono); font-size: 12px; color: var(--g-yellow);">BM25 Score: ${r.sparse_score.toFixed(3)}</div>
+          </div>
+        `;
+      });
+    }
+
+    // Benchmark Suite
+    async function runSyntheticBenchmark() {
+      const numVecs = parseInt(document.getElementById('benchVectorCount').value);
+      const dim = parseInt(document.getElementById('benchDimension').value);
+      const queriesCount = parseInt(document.getElementById('benchQueriesCount').value);
+      const btn = document.getElementById('runBenchmarkBtn');
+      const log = document.getElementById('benchLogBox');
+
+      btn.disabled = true;
+      btn.innerText = "Running Benchmark...";
+      log.innerText = `Starting benchmark with ${numVecs} vectors (${dim}-D)...\n`;
+
+      const startTime = performance.now();
+      const res = await apiFetch('/api/benchmark', {
+        method: 'POST',
+        body: JSON.stringify({
+          num_vectors: numVecs,
+          dimension: dim,
+          queries_count: queriesCount,
+          k: 10
+        })
+      });
+
+      btn.disabled = false;
+      btn.innerText = "🚀 Run Benchmark Suite";
+
+      if (res) {
+        document.getElementById('benchHnswQps').innerText = `${Math.round(res.hnsw_qps)} QPS`;
+        document.getElementById('benchFlatQps').innerText = `${Math.round(res.flat_qps)} QPS`;
+        document.getElementById('benchRecall').innerText = `${(res.recall_at_k * 100).toFixed(1)}%`;
+        document.getElementById('benchSpeedup').innerText = `${res.speedup_factor.toFixed(1)}x`;
+
+        document.getElementById('benchBarHnsw').style.width = '15%';
+        document.getElementById('benchBarHnsw').innerText = `${res.hnsw_avg_latency_ms.toFixed(2)} ms`;
+        document.getElementById('benchBarFlat').style.width = '85%';
+        document.getElementById('benchBarFlat').innerText = `${res.flat_avg_latency_ms.toFixed(2)} ms`;
+
+        log.innerText += `[Complete] Index Build Time: ${res.build_time_ms.toFixed(1)} ms\n`;
+        log.innerText += `HNSW Mean Latency: ${res.hnsw_avg_latency_ms.toFixed(3)} ms (p95: ${res.hnsw_p95_ms.toFixed(3)} ms)\n`;
+        log.innerText += `Flat Scan Latency: ${res.flat_avg_latency_ms.toFixed(3)} ms\n`;
+        log.innerText += `Recall @ 10: ${(res.recall_at_k * 100).toFixed(2)}%\n`;
+      }
+    }
+
+    // Modal & Seeding
+    function openCreateCollectionModal() {
+      document.getElementById('createColModal').classList.add('active');
+    }
+    function closeCreateCollectionModal() {
+      document.getElementById('createColModal').classList.remove('active');
+    }
+
+    async function submitCreateCollection() {
+      const name = document.getElementById('modalColName').value.trim();
+      const dim = parseInt(document.getElementById('modalColDim').value);
+      const metric = document.getElementById('modalColMetric').value;
+      const indexType = document.getElementById('modalColIndexType').value;
+
+      if (!name) { alert("Please enter collection name"); return; }
+      await apiFetch('/api/collections', {
+        method: 'POST',
+        body: JSON.stringify({ name, dimension: dim, metric, index_type: indexType })
+      });
+      closeCreateCollectionModal();
+      await refreshCollectionsList();
+    }
+
+    async function loadSampleDemoData() {
+      const demoCollectionName = 'demo_ai_papers';
+      await apiFetch('/api/collections', {
+        method: 'POST',
+        body: JSON.stringify({ name: demoCollectionName, dimension: 4, metric: 'cosine', index_type: 'hnsw' })
+      });
+
+      const docs = [
+        { id: "paper_1", document: "Attention Is All You Need: Transformer neural network architecture", vector: [0.95, 0.1, 0.2, 0.05], metadata: { category: "ai", year: 2017 } },
+        { id: "paper_2", document: "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", vector: [0.92, 0.15, 0.25, 0.08], metadata: { category: "ai", year: 2018 } },
+        { id: "paper_3", document: "Hierarchical Navigable Small World graphs for fast approximate nearest neighbor search", vector: [0.15, 0.9, 0.3, 0.1], metadata: { category: "database", year: 2016 } },
+        { id: "paper_4", document: "Postgres and Relational ACID Transaction Optimization in Distributed Systems", vector: [0.1, 0.85, 0.1, 0.6], metadata: { category: "database", year: 2020 } },
+        { id: "paper_5", document: "Quantum Supremacy Using a Programmable Superconducting Processor", vector: [0.05, 0.1, 0.95, 0.85], metadata: { category: "physics", year: 2019 } },
+        { id: "paper_6", document: "Okapi BM25 Term Weighting and Inverted Index Scoring for Information Retrieval", vector: [0.4, 0.6, 0.2, 0.5], metadata: { category: "search", year: 2009 } }
+      ];
+
+      await apiFetch(`/api/collections/${demoCollectionName}/insert`, {
+        method: 'POST',
+        body: JSON.stringify({ documents: docs })
+      });
+
+      state.currentCollection = demoCollectionName;
+      await refreshCollectionsList();
+    }
+
+    async function insertSingleDocument() {
+      const id = document.getElementById('insertDocId').value.trim();
+      const text = document.getElementById('insertDocText').value.trim();
+      const vecStr = document.getElementById('insertDocVector').value.trim();
+      const metaStr = document.getElementById('insertDocMeta').value.trim();
+
+      let vector = vecStr ? vecStr.split(',').map(Number) : [Math.random(), Math.random(), Math.random(), Math.random()];
+      let metadata = {};
+      try { metadata = JSON.parse(metaStr); } catch (e) {}
+
+      await apiFetch(`/api/collections/${state.currentCollection}/insert`, {
+        method: 'POST',
+        body: JSON.stringify({ documents: [{ id, document: text, vector, metadata }] })
+      });
+
+      alert("Document inserted successfully!");
+      await loadCollectionItems();
+    }
+
+    function updateCollectionStatsDisplay() {
+      const box = document.getElementById('collectionDetailBox');
+      box.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+          <div class="stat-pill"><span class="stat-pill-label">Name</span><span class="stat-pill-val" style="font-size: 16px;">${state.currentCollection}</span></div>
+          <div class="stat-pill"><span class="stat-pill-label">Total Documents</span><span class="stat-pill-val">${state.items.length}</span></div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

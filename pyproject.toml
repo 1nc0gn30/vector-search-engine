@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vector-search-engine"
+version = "0.1.0"
+description = "Pure Python zero-dependency vector search engine with HNSW, IVF, Quantization, Hybrid Search, MCP Server, and Google Vector Studio UI."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Vector Search Engine Contributors"}
+]
+keywords = [
+    "vector-search",
+    "hnsw",
+    "embeddings",
+    "similarity-search",
+    "mcp",
+    "hybrid-search",
+    "bm25",
+    "nearest-neighbor",
+    "vector-database"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Database :: Database Engines/Servers",
+]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+vector-search-engine = "vector_search_engine.cli:main"
+vector-search = "vector_search_engine.cli:main"
+vector-engine = "vector_search_engine.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/example/vector-search-engine"
+Documentation = "https://github.com/example/vector-search-engine#readme"
+Repository = "https://github.com/example/vector-search-engine.git"
+Issues = "https://github.com/example/vector-search-engine/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::ResourceWarning",
+]
+addopts = "-v --strict-markers"
