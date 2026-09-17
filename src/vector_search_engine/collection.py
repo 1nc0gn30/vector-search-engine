@@ -523,3 +523,64 @@ class VectorCollection:
             items = [VectorItem.from_dict(item_data) for item_data in data.get("items", [])]
             collection.upsert_batch(items)
             return collection
+
+    def export_embeddings_jsonl(self, path: Union[str, Path]) -> int:
+        """Export all collection items to standard JSONL format.
+
+        Each line contains: {"id": str, "vector": list[float], "document": str|null, "metadata": dict}
+        Returns count of items exported.
+        """
+        target = safe_path_normalization(path)
+        safe_ensure_dir(target.parent)
+        count = 0
+        with open(target, "w", encoding="utf-8") as f:
+            for item in self._items.values():
+                record = {
+                    "id": item.id,
+                    "vector": item.vector,
+                    "document": item.document,
+                    "metadata": item.metadata,
+                    "created_at": item.created_at,
+                }
+                f.write(json.dumps(record) + "\n")
+                count += 1
+        return count
+
+    def import_embeddings_jsonl(
+        self,
+        path: Union[str, Path],
+        batch_size: int = 500,
+    ) -> int:
+        """Import items from JSONL embeddings file with batch streaming.
+
+        Returns count of items imported.
+        """
+        source = safe_path_normalization(path)
+        if not source.exists():
+            raise FileNotFoundError(f"JSONL file not found: {source}")
+
+        batch: List[VectorItem] = []
+        total = 0
+        with open(source, "r", encoding="utf-8") as f:
+            for line in f:
+                line_str = line.strip()
+                if not line_str:
+                    continue
+                record = json.loads(line_str)
+                item = VectorItem(
+                    id=str(record["id"]),
+                    vector=record["vector"],
+                    metadata=record.get("metadata", {}),
+                    document=record.get("document"),
+                    created_at=record.get("created_at"),
+                )
+                batch.append(item)
+                if len(batch) >= batch_size:
+                    self.upsert_batch(batch)
+                    total += len(batch)
+                    batch = []
+        if batch:
+            self.upsert_batch(batch)
+            total += len(batch)
+        return total
+

@@ -447,3 +447,220 @@ def generate_random_vector(
     if normalized:
         return normalize_vector(raw)
     return raw
+
+
+class ProductQuantizer:
+    """Pure Python Product Quantization (PQ) engine for vector compression.
+
+    Partitions D-dimensional vectors into M orthogonal sub-vectors of size d = D // M.
+    Quantizes each subspace into K centroids (default 256 for 1 byte per subspace).
+    Enables Asymmetric Distance Computation (ADC) with precomputed query lookup tables.
+    """
+
+    def __init__(
+        self,
+        dimension: int,
+        num_subspaces: int = 8,
+        num_centroids: int = 256,
+    ) -> None:
+        if num_subspaces <= 0:
+            raise ValueError(f"num_subspaces must be positive, got {num_subspaces}")
+        if dimension % num_subspaces != 0:
+            raise ValueError(
+                f"Dimension {dimension} must be divisible by num_subspaces {num_subspaces}"
+            )
+        if not (1 <= num_centroids <= 256):
+            raise ValueError(
+                f"num_centroids must be between 1 and 256, got {num_centroids}"
+            )
+
+        self.dimension = dimension
+        self.num_subspaces = num_subspaces
+        self.sub_dim = dimension // num_subspaces
+        self.num_centroids = num_centroids
+        # codebook: shape (M, K, sub_dim)
+        self.codebook: Optional[List[List[List[float]]]] = None
+
+    def is_trained(self) -> bool:
+        """Check whether the quantizer codebook has been trained."""
+        return self.codebook is not None and len(self.codebook) == self.num_subspaces
+
+    def train(
+        self,
+        vectors: Sequence[Sequence[float]],
+        max_iters: int = 15,
+        seed: int = 42,
+    ) -> None:
+        """Train codebook centroids across all subspaces using k-means."""
+        if not vectors:
+            raise ValueError("Training vectors cannot be empty")
+        for v in vectors:
+            if len(v) != self.dimension:
+                raise ValueError(
+                    f"Vector dimension {len(v)} does not match quantizer dimension {self.dimension}"
+                )
+
+        rng = random.Random(seed)
+        codebook: List[List[List[float]]] = []
+
+        for m in range(self.num_subspaces):
+            start_idx = m * self.sub_dim
+            end_idx = start_idx + self.sub_dim
+            sub_vectors = [v[start_idx:end_idx] for v in vectors]
+
+            # Initialize centroids
+            k = min(self.num_centroids, len(sub_vectors))
+            centroids: List[List[float]] = [list(x) for x in rng.sample(sub_vectors, k)]
+            while len(centroids) < self.num_centroids:
+                centroids.append(list(rng.choice(sub_vectors)))
+
+            # Iterative k-means
+            for _ in range(max_iters):
+                clusters: List[List[Sequence[float]]] = [[] for _ in range(self.num_centroids)]
+                for sv in sub_vectors:
+                    # Find nearest centroid
+                    best_c = 0
+                    best_d = float("inf")
+                    for c_idx, c_vec in enumerate(centroids):
+                        d = sum((a - b) * (a - b) for a, b in zip(sv, c_vec))
+                        if d < best_dist if (best_dist := d) < float("inf") else True:
+                            pass
+                    for c_idx, c_vec in enumerate(centroids):
+                        d = sum((a - b) * (a - b) for a, b in zip(sv, c_vec))
+                        if d < best_d:
+                            best_d = d
+                            best_c = c_idx
+                    clusters[best_c].append(sv)
+
+                # Recompute centroids
+                for c_idx in range(self.num_centroids):
+                    pts = clusters[c_idx]
+                    if pts:
+                        new_centroid = [
+                            sum(pt[dim_i] for pt in pts) / len(pts)
+                            for dim_i in range(self.sub_dim)
+                        ]
+                        centroids[c_idx] = new_centroid
+                    else:
+                        centroids[c_idx] = list(rng.choice(sub_vectors))
+
+            codebook.append(centroids)
+
+        self.codebook = codebook
+
+    def encode(self, vector: Sequence[float]) -> bytes:
+        """Compress a D-dimensional vector into M bytes."""
+        if not self.is_trained():
+            raise RuntimeError("ProductQuantizer must be trained before encoding")
+        if len(vector) != self.dimension:
+            raise ValueError(
+                f"Vector dimension {len(vector)} does not match {self.dimension}"
+            )
+
+        code_bytes = bytearray(self.num_subspaces)
+        for m in range(self.num_subspaces):
+            start_idx = m * self.sub_dim
+            end_idx = start_idx + self.sub_dim
+            sv = vector[start_idx:end_idx]
+
+            centroids = self.codebook[m]  # type: ignore[index]
+            best_idx = 0
+            best_dist = float("inf")
+            for c_idx, c_vec in enumerate(centroids):
+                d = sum((a - b) * (a - b) for a, b in zip(sv, c_vec))
+                if d < best_dist:
+                    best_dist = d
+                    best_idx = c_idx
+
+            code_bytes[m] = best_idx
+
+        return bytes(code_bytes)
+
+    def decode(self, code: bytes) -> List[float]:
+        """Reconstruct an approximation of the vector from its M-byte code."""
+        if not self.is_trained():
+            raise RuntimeError("ProductQuantizer must be trained before decoding")
+        if len(code) != self.num_subspaces:
+            raise ValueError(
+                f"Code length {len(code)} does not match num_subspaces {self.num_subspaces}"
+            )
+
+        reconstructed: List[float] = []
+        for m in range(self.num_subspaces):
+            c_idx = code[m]
+            reconstructed.extend(self.codebook[m][c_idx])  # type: ignore[index]
+
+        return reconstructed
+
+    def compute_distance_table(
+        self,
+        query: Sequence[float],
+        metric: DistanceMetric = DistanceMetric.EUCLIDEAN,
+    ) -> List[List[float]]:
+        """Precompute distance lookup table of shape (M, K) for query sub-vectors."""
+        if not self.is_trained():
+            raise RuntimeError("ProductQuantizer must be trained before computing distance table")
+        if len(query) != self.dimension:
+            raise ValueError(f"Query dimension {len(query)} does not match {self.dimension}")
+
+        table: List[List[float]] = []
+        for m in range(self.num_subspaces):
+            start_idx = m * self.sub_dim
+            end_idx = start_idx + self.sub_dim
+            q_sub = query[start_idx:end_idx]
+
+            row: List[float] = []
+            for c_vec in self.codebook[m]:  # type: ignore[index]
+                if metric == DistanceMetric.EUCLIDEAN:
+                    row.append(sum((a - b) * (a - b) for a, b in zip(q_sub, c_vec)))
+                elif metric == DistanceMetric.DOT_PRODUCT:
+                    row.append(-sum(a * b for a, b in zip(q_sub, c_vec)))
+                elif metric == DistanceMetric.MANHATTAN:
+                    row.append(sum(abs(a - b) for a, b in zip(q_sub, c_vec)))
+                else:
+                    row.append(sum((a - b) * (a - b) for a, b in zip(q_sub, c_vec)))
+            table.append(row)
+
+        return table
+
+    def asymmetric_distance_with_table(
+        self,
+        distance_table: Sequence[Sequence[float]],
+        code: bytes,
+    ) -> float:
+        """Fast Asymmetric Distance Computation (ADC) using precomputed lookup table."""
+        dist = 0.0
+        for m in range(self.num_subspaces):
+            dist += distance_table[m][code[m]]
+        return dist
+
+    def asymmetric_distance(
+        self,
+        query: Sequence[float],
+        code: bytes,
+        metric: DistanceMetric = DistanceMetric.EUCLIDEAN,
+    ) -> float:
+        """Compute ADC distance directly from query to encoded code."""
+        table = self.compute_distance_table(query, metric=metric)
+        return self.asymmetric_distance_with_table(table, code)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize quantizer parameters and codebook."""
+        return {
+            "dimension": self.dimension,
+            "num_subspaces": self.num_subspaces,
+            "num_centroids": self.num_centroids,
+            "codebook": self.codebook,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ProductQuantizer":
+        """Reconstruct a ProductQuantizer from dictionary."""
+        pq = cls(
+            dimension=data["dimension"],
+            num_subspaces=data["num_subspaces"],
+            num_centroids=data["num_centroids"],
+        )
+        pq.codebook = data.get("codebook")
+        return pq
+

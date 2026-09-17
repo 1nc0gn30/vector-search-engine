@@ -52,6 +52,7 @@ from vector_search_engine.metrics import (
     normalize_vector,
     random_projection,
     scalar_quantize,
+    ProductQuantizer,
 )
 
 # Indexes and filtering
@@ -138,4 +139,5 @@ __all__ = [
     "random_projection",
     "export_collection",
     "load_collection",
+    "ProductQuantizer",
 ]
