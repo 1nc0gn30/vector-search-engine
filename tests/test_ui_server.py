@@ -57,7 +57,7 @@ def test_ui_server_static_and_health(ui_server):
     status, body = _request_json(f"{ui_server}/")
     assert status == 200
     assert "<!DOCTYPE html>" in body
-    assert "Google Vector Studio" in body
+    assert "Vector Studio" in body
 
     # Test health endpoint
     status, data = _request_json(f"{ui_server}/api/health")

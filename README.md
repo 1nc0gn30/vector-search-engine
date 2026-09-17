@@ -1,4 +1,4 @@
-# 🔍 Vector Search Engine & Google Vector Studio
+# 🔍 Vector Search Engine & Vector Studio
 
 [![CI](https://github.com/example/vector-search-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/example/vector-search-engine/actions/workflows/ci.yml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -6,7 +6,7 @@
 [![Dependencies: Zero](https://img.shields.io/badge/dependencies-0-success.svg)](pyproject.toml)
 [![MCP Server](https://img.shields.io/badge/MCP-Protocol%202024--11--05-blueviolet.svg)](src/vector_search_engine/mcp_server.py)
 
-A production-grade, **pure Python standard library (zero external runtime dependencies)** vector database and approximate nearest neighbor (ANN) search engine featuring **Hierarchical Navigable Small World (HNSW)** graph indexing, **Inverted File (IVF)** clustering, **Okapi BM25** lexical retrieval, **Hybrid Search** with **Reciprocal Rank Fusion (RRF)**, **Model Context Protocol (MCP)** server integration for AI assistants, and **Google Vector Studio** Material 3 interactive web UI.
+A production-grade, **pure Python standard library (zero external runtime dependencies)** vector database and approximate nearest neighbor (ANN) search engine featuring **Hierarchical Navigable Small World (HNSW)** graph indexing, **Inverted File (IVF)** clustering, **Okapi BM25** lexical retrieval, **Hybrid Search** with **Reciprocal Rank Fusion (RRF)**, **Model Context Protocol (MCP)** server integration for AI assistants, and **Vector Studio** interactive web UI (influenced by Material 3 design).
 
 ---
 
@@ -20,7 +20,7 @@ A production-grade, **pure Python standard library (zero external runtime depend
   - [IVF Centroid Partitioning](#3-ivf-inverted-file-index)
   - [Hybrid Search & Fusion Formulas](#4-hybrid-search--fusion-formulas)
   - [Scalar & Binary Quantization](#5-vector-quantization)
-- [Google Vector Studio Web UI](#-google-vector-studio-web-ui)
+- [Vector Studio Web UI](#-vector-studio-web-ui)
 - [Model Context Protocol (MCP) Integration](#-model-context-protocol-mcp-integration)
 - [Python API Quickstart](#-python-api-quickstart)
 - [CLI Reference](#-cli-reference)
@@ -39,7 +39,7 @@ A production-grade, **pure Python standard library (zero external runtime depend
 - **Hybrid Search Engine**: Okapi BM25 inverted index tokenization combined with dense vector representations via Reciprocal Rank Fusion (RRF) and linear $\alpha$ blending.
 - **Complex Metadata Filtering**: MongoDB-style query filtering ($eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $contains, $all, $regex, $exists, $and, $or, $not, $nor).
 - **Dual Persistence Engines**: Human-readable atomic JSON serialization and high-density binary `.vdb` serialization.
-- **Google Vector Studio UI**: Material 3 visual studio featuring real-time 2D/3D vector space projection, HNSW multi-layer hierarchy graph inspector, hybrid search score lab, and 1-click synthetic benchmark runner.
+- **Vector Studio UI**: Material 3 inspired visual studio featuring real-time 2D/3D vector space projection, HNSW multi-layer hierarchy graph inspector, hybrid search score lab, and 1-click synthetic benchmark runner.
 - **Model Context Protocol (MCP) Server**: Full JSON-RPC 2.0 stdio server for Claude Desktop, Cursor, Cline, and Antigravity agents.
 
 ---
@@ -50,7 +50,7 @@ A production-grade, **pure Python standard library (zero external runtime depend
 flowchart TD
     subgraph ClientInterfaces["Client & Agent Interfaces"]
         CLI["CLI Tool (vector-search-engine)"]
-        Studio["Google Vector Studio (Material 3 UI)"]
+        Studio["Vector Studio (Material 3 Inspired UI)"]
         MCP["Model Context Protocol (MCP Server)"]
         REST["REST API Server (ThreadingHTTPServer)"]
         PyAPI["Python Embedded API (VectorCollection)"]
@@ -182,9 +182,9 @@ $$\text{Score}_{\text{linear}}(d) = \alpha \cdot \text{Norm}(\text{Score}_{\text
 
 ---
 
-## 🎨 Google Vector Studio Web UI
+## 🎨 Vector Studio Web UI
 
-Google Vector Studio provides a clean Google Material 3 workspace:
+Vector Studio provides a clean, responsive workspace influenced by Material 3 design:
 
 - **🌌 2D / 3D Vector Space Viewport**: High performance Canvas projection with hover tooltips, metadata coloring, and nearest neighbor trajectory links.
 - **🔍 Live Search Simulator**: Real-time vector and text similarity search with animated percentage score match bars and metadata filtering.
@@ -335,7 +335,7 @@ vector-search stats research_papers
 # Run synthetic performance benchmark
 vector-search benchmark -n 1000 -d 64 -k 10
 
-# Launch Google Vector Studio UI
+# Launch Vector Studio UI
 vector-search serve --port 8000
 
 # Start MCP stdio server

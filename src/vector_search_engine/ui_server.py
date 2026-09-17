@@ -1,8 +1,8 @@
-"""Pure Python UI server and REST API for Google Vector Studio.
+"""Pure Python UI server and REST API for Vector Studio.
 
-Serves Google Vector Studio web interface and provides REST endpoints for
-collection management, dense vector search, sparse BM25 search, hybrid RRF
-fusion, graph visualizer inspection, diagnostics, and synthetic benchmarks.
+Serves the Vector Studio web interface (design influenced by Material 3) and provides
+REST endpoints for collection management, dense vector search, sparse BM25 search,
+hybrid RRF fusion, graph visualizer inspection, diagnostics, and synthetic benchmarks.
 """
 
 from __future__ import annotations
@@ -49,8 +49,8 @@ PUBLIC_DIR = PACKAGE_ROOT / "public"
 
 EMBEDDED_HTML_FALLBACK = """<!DOCTYPE html>
 <html>
-<head><title>Google Vector Studio</title></head>
-<body><h1>Google Vector Studio</h1><p>Embedded UI active.</p></body>
+<head><title>Vector Studio</title></head>
+<body><h1>Vector Studio</h1><p>Embedded UI active.</p></body>
 </html>"""
 
 
@@ -481,7 +481,7 @@ def start_ui_server(
     collections: Optional[Dict[str, VectorCollection]] = None,
     background: bool = False,
 ) -> ThreadingHTTPServer:
-    """Start ThreadingHTTPServer serving Google Vector Studio and REST API."""
+    """Start ThreadingHTTPServer serving Vector Studio and REST API."""
     if collections:
         with _REGISTRY_LOCK:
             _COLLECTIONS_REGISTRY.update(collections)
@@ -496,18 +496,18 @@ def start_ui_server(
 def run_ui_server(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Run UI server in foreground."""
     server = start_ui_server(host=host, port=port, background=False)
-    print(f"🚀 Google Vector Studio UI running at http://{host}:{port}")
+    print(f"🚀 Vector Studio UI running at http://{host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nStopping Google Vector Studio UI server...")
+        print("\nStopping Vector Studio UI server...")
     finally:
         server.server_close()
 
 
 def main() -> None:
     """CLI entry point for running UI server."""
-    parser = argparse.ArgumentParser(description="Google Vector Studio UI Server")
+    parser = argparse.ArgumentParser(description="Vector Studio UI Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host interface to bind (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
     args = parser.parse_args()
