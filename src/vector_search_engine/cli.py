@@ -470,13 +470,25 @@ def cmd_query(args: argparse.Namespace, ui: TerminalUI) -> int:
 
     k = int(getattr(args, "top_k", getattr(args, "k", 5)))
     t0 = time.perf_counter()
-    results = collection.query(
-        query_vector=query_vec,
-        k=k,
-        filter_expr=filter_expr,
-        include_vector=args.include_vector,
-        ef_search=int(args.ef_search) if args.ef_search else None,
-    )
+    diversity = getattr(args, "diversity", None)
+    if diversity is not None:
+        results = collection.diverse_query(
+            query_vector=query_vec,
+            k=k,
+            fetch_k=int(getattr(args, "fetch_k", 50)),
+            lambda_mult=float(diversity),
+            filter_expr=filter_expr,
+            include_vector=args.include_vector,
+            ef_search=int(args.ef_search) if args.ef_search else None,
+        )
+    else:
+        results = collection.query(
+            query_vector=query_vec,
+            k=k,
+            filter_expr=filter_expr,
+            include_vector=args.include_vector,
+            ef_search=int(args.ef_search) if args.ef_search else None,
+        )
     latency_ms = (time.perf_counter() - t0) * 1000.0
 
     if args.json:
@@ -1235,6 +1247,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_query.add_argument("--metric", type=str, help="Override distance metric.")
     p_query.add_argument("--include-vector", action="store_true", help="Include vector arrays in results.")
     p_query.add_argument("--ef-search", type=int, help="Override HNSW ef_search beam width.")
+    p_query.add_argument("--lambda-mult", "--diversity", dest="diversity", type=float, default=None, help="MMR diversity factor in [0.0, 1.0] (1.0=relevance, 0.0=diversity).")
+    p_query.add_argument("--fetch-k", type=int, default=50, help="Initial candidate pool size for MMR diversity search (default: 50).")
 
     # 4. hybrid
     p_hybrid = subparsers.add_parser("hybrid", parents=[common_parser], help="Run hybrid dense + sparse search.")

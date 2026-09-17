@@ -235,6 +235,61 @@ class VectorCollection:
             **kwargs,
         )
 
+    def diverse_query(
+        self,
+        query_vector: Sequence[float],
+        k: int = 10,
+        fetch_k: int = 50,
+        lambda_mult: float = 0.5,
+        filter_expr: Optional[Dict[str, Any]] = None,
+        include_vector: bool = False,
+        ef_search: Optional[int] = None,
+        **kwargs: Any,
+    ) -> List[SearchResult]:
+        """Execute a diversity-aware vector similarity query using Maximal Marginal Relevance (MMR).
+
+        Balances query relevance with novelty/diversity to avoid redundant nearest neighbors.
+
+        Args:
+            query_vector: Search query vector embedding.
+            k: Target number of diverse results.
+            fetch_k: Initial candidate pool to retrieve before diversity re-ranking.
+            lambda_mult: Diversity factor in [0.0, 1.0] (1.0 = pure relevance, 0.0 = pure diversity).
+            filter_expr: Optional metadata filter expression.
+            include_vector: Whether to include vector embeddings in final results.
+            ef_search: Search depth for HNSW index.
+
+        Returns:
+            List of SearchResult items selected by MMR.
+        """
+        if len(query_vector) != self.config.dimension:
+            raise ValueError(
+                f"Query vector dimension {len(query_vector)} does not match collection dimension {self.config.dimension}"
+            )
+
+        candidates = self.query(
+            query_vector=query_vector,
+            k=max(fetch_k, k),
+            filter_expr=filter_expr,
+            include_vector=True,
+            ef_search=ef_search,
+            **kwargs,
+        )
+
+        diverse_results = HybridSearchEngine.maximal_marginal_relevance(
+            query_vector=query_vector,
+            candidates=candidates,
+            k=k,
+            lambda_mult=lambda_mult,
+            metric=self.config.metric,
+        )
+
+        if not include_vector:
+            for r in diverse_results:
+                r.vector = None
+
+        return diverse_results
+
     def text_search(
         self,
         query_text: str,

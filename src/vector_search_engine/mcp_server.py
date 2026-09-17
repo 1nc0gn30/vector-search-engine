@@ -307,6 +307,17 @@ class MCPServer:
                             "type": "integer",
                             "description": "Optional search beam width override for HNSW index.",
                         },
+                        "diversity_lambda": {
+                            "type": "number",
+                            "description": "Optional MMR diversity factor in [0.0, 1.0]. 1.0 = pure relevance, 0.0 = maximal diversity. Enables diversity-aware retrieval.",
+                            "minimum": 0.0,
+                            "maximum": 1.0,
+                        },
+                        "fetch_k": {
+                            "type": "integer",
+                            "description": "Initial candidate pool size for diversity re-ranking (default: max(top_k * 3, 20)).",
+                            "minimum": 1,
+                        },
                     },
                     "required": ["collection"],
                 },
@@ -665,20 +676,37 @@ class MCPServer:
         filter_expr = args.get("filter") or args.get("metadata_filter")
         include_vector = bool(args.get("include_vector", False))
         ef_search = args.get("ef_search")
+        diversity_lambda = args.get("diversity_lambda")
+        if diversity_lambda is None:
+            diversity_lambda = args.get("lambda_mult")
+        fetch_k = int(args.get("fetch_k", max(top_k * 3, 20)))
 
         start_time = time.perf_counter()
-        results = collection.query(
-            query_vector=query_vec,
-            k=top_k,
-            filter_expr=filter_expr,
-            include_vector=include_vector,
-            ef_search=int(ef_search) if ef_search is not None else None,
-        )
+        if diversity_lambda is not None:
+            results = collection.diverse_query(
+                query_vector=query_vec,
+                k=top_k,
+                fetch_k=fetch_k,
+                lambda_mult=float(diversity_lambda),
+                filter_expr=filter_expr,
+                include_vector=include_vector,
+                ef_search=int(ef_search) if ef_search is not None else None,
+            )
+            q_type = "diverse_vector_mmr"
+        else:
+            results = collection.query(
+                query_vector=query_vec,
+                k=top_k,
+                filter_expr=filter_expr,
+                include_vector=include_vector,
+                ef_search=int(ef_search) if ef_search is not None else None,
+            )
+            q_type = "dense_vector"
         latency_ms = (time.perf_counter() - start_time) * 1000.0
 
         return {
             "collection": col_name,
-            "query_type": "dense_vector",
+            "query_type": q_type,
             "top_k": top_k,
             "results_count": len(results),
             "results": [r.to_dict() for r in results],

@@ -11,10 +11,12 @@ import re
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 from vector_search_engine.models import (
+    DistanceMetric,
     HybridSearchResult,
     SearchResult,
     VectorItem,
 )
+from vector_search_engine.metrics import compute_similarity
 from vector_search_engine.indexes import evaluate_filter
 
 
@@ -306,3 +308,107 @@ class HybridSearchEngine:
 
         hybrid_results.sort(key=lambda r: -r.combined_score)
         return hybrid_results[:top_k]
+
+    @staticmethod
+    def maximal_marginal_relevance(
+        query_vector: Sequence[float],
+        candidates: Sequence[Union[SearchResult, VectorItem]],
+        k: int = 10,
+        lambda_mult: float = 0.5,
+        metric: Union[DistanceMetric, str] = DistanceMetric.COSINE,
+    ) -> List[SearchResult]:
+        """Rank and select diverse candidates using Maximal Marginal Relevance (MMR).
+
+        MMR balances query relevance with novelty/diversity by penalizing candidates
+        that are highly similar to already selected candidates:
+            MMR(d) = lambda * sim(d, query) - (1 - lambda) * max_{s in selected} sim(d, s)
+
+        Args:
+            query_vector: Search query embedding.
+            candidates: Candidate search results or VectorItems (must include vector).
+            k: Maximum number of diverse results to return.
+            lambda_mult: Diversity weight in [0.0, 1.0].
+                1.0 = Pure relevance (equivalent to nearest neighbors).
+                0.0 = Maximal diversity / novelty.
+                0.5 = Balanced relevance and diversity.
+            metric: Distance metric for similarity evaluation.
+
+        Returns:
+            List of SearchResult items ranked by MMR selection order.
+        """
+        if not candidates or k <= 0:
+            return []
+
+        lambda_mult = max(0.0, min(1.0, float(lambda_mult)))
+        metric_enum = DistanceMetric.from_str(metric) if isinstance(metric, str) else metric
+
+        # Normalize candidates to (id, vector, SearchResult)
+        item_pool: List[Tuple[str, Sequence[float], SearchResult]] = []
+        for cand in candidates:
+            if isinstance(cand, VectorItem):
+                sim = compute_similarity(cand.vector, query_vector, metric_enum)
+                dist = 1.0 - sim if metric_enum == DistanceMetric.COSINE else max(0.0, -sim)
+                sr = SearchResult(
+                    id=cand.id,
+                    score=sim,
+                    distance=dist,
+                    vector=list(cand.vector),
+                    metadata=dict(cand.metadata),
+                    document=cand.document,
+                )
+                item_pool.append((cand.id, cand.vector, sr))
+            elif isinstance(cand, SearchResult):
+                if cand.vector is None:
+                    continue  # Vector required for MMR diversity computation
+                item_pool.append((cand.id, cand.vector, cand))
+
+        if not item_pool:
+            return []
+
+        # Precompute query relevance similarity for all candidates
+        query_sims: Dict[str, float] = {}
+        for doc_id, vec, sr in item_pool:
+            query_sims[doc_id] = compute_similarity(vec, query_vector, metric_enum)
+
+        selected: List[SearchResult] = []
+        selected_vectors: List[Sequence[float]] = []
+        unselected = list(item_pool)
+
+        # Iteratively select candidates maximizing MMR
+        target_count = min(k, len(item_pool))
+        while len(selected) < target_count and unselected:
+            best_idx = -1
+            best_mmr_score = -float("inf")
+
+            for idx, (doc_id, vec, sr) in enumerate(unselected):
+                sim_to_query = query_sims[doc_id]
+                if not selected_vectors:
+                    mmr_score = sim_to_query
+                else:
+                    max_sim_to_selected = max(
+                        compute_similarity(vec, s_vec, metric_enum)
+                        for s_vec in selected_vectors
+                    )
+                    mmr_score = lambda_mult * sim_to_query - (1.0 - lambda_mult) * max_sim_to_selected
+
+                if mmr_score > best_mmr_score:
+                    best_mmr_score = mmr_score
+                    best_idx = idx
+
+            if best_idx >= 0:
+                doc_id, vec, sr = unselected.pop(best_idx)
+                # Create result copy with MMR score
+                res = SearchResult(
+                    id=sr.id,
+                    score=best_mmr_score,
+                    distance=sr.distance,
+                    vector=sr.vector,
+                    metadata=dict(sr.metadata),
+                    document=sr.document,
+                )
+                selected.append(res)
+                selected_vectors.append(vec)
+            else:
+                break
+
+        return selected

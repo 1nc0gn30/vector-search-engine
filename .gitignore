@@ -40,3 +40,4 @@ ENV/
 test_*.json
 test_*.vdb
 .data/
+.vector_store/
