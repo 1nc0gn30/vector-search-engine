@@ -796,6 +796,66 @@ def cmd_stats(args: argparse.Namespace, ui: TerminalUI) -> int:
     return 0
 
 
+def cmd_cluster(args: argparse.Namespace, ui: TerminalUI) -> int:
+    """Run vector clustering and silhouette cohesion analysis."""
+    col_name = args.collection.strip()
+    data_dir = safe_ensure_dir(args.data_dir)
+
+    collection_file = None
+    for ext in (".json", ".vdb"):
+        p = data_dir / f"{col_name}{ext}"
+        if p.exists():
+            collection_file = p
+            break
+
+    if collection_file is None:
+        ui.error(f"Collection '{col_name}' not found in {data_dir}.")
+        return 1
+
+    collection = VectorCollection.load_from_disk(collection_file)
+    k = args.k
+    method = args.method
+    filter_expr = None
+    if getattr(args, "filter", None):
+        filter_expr = parse_metadata_input(args.filter)
+
+    ui.info(f"Clustering collection '{col_name}' ({len(collection)} items) with {method.upper()} (k={k})...")
+    res = collection.cluster(
+        k=k,
+        method=method,
+        filter_expr=filter_expr,
+        max_iter=args.max_iter,
+        seed=args.seed,
+    )
+
+    if args.json:
+        data = res.to_dict()
+        data["collection"] = col_name
+        print(json.dumps(data, indent=2))
+        return 0
+
+    ui.header(f"Cluster Analysis: '{col_name}' ({method.upper()})")
+    ui.print_card("Summary", {
+        "Total Clusters": len(res.clusters),
+        "Silhouette Score": f"{res.silhouette_score:.4f}",
+        "Inertia (WCSS)": f"{res.inertia:.4f}",
+        "Iterations": res.iterations,
+        "Converged": "Yes" if res.converged else "No",
+        "Duration": f"{res.duration_ms:.2f} ms",
+    })
+
+    for c in res.clusters:
+        ui.print_card(f"Cluster #{c.cluster_id} (Size: {c.size})", {
+            "Medoid ID": c.medoid_id or "(none)",
+            "Dispersion": f"{c.dispersion:.4f}",
+            "Diameter": f"{c.diameter:.4f}",
+            "Top Metadata": json.dumps(c.top_metadata) if c.top_metadata else "None",
+            "Sample Members": ", ".join(c.member_ids[:5]) + ("..." if len(c.member_ids) > 5 else ""),
+        })
+
+    return 0
+
+
 def cmd_list(args: argparse.Namespace, ui: TerminalUI) -> int:
     """List all available collections in data directory."""
     data_dir = safe_ensure_dir(args.data_dir)
@@ -1284,6 +1344,15 @@ def build_parser() -> argparse.ArgumentParser:
     # 8. list
     subparsers.add_parser("list", parents=[common_parser], help="List all stored collections.")
 
+    # 8b. cluster
+    p_cluster = subparsers.add_parser("cluster", parents=[common_parser], help="Cluster collection items and analyze silhouette cohesion.")
+    p_cluster.add_argument("collection", help="Collection name.")
+    p_cluster.add_argument("-k", type=int, default=3, help="Number of clusters (default: 3).")
+    p_cluster.add_argument("--method", choices=["kmeans", "hierarchical"], default="kmeans", help="Clustering algorithm.")
+    p_cluster.add_argument("--filter", type=str, default=None, help="JSON or key:value filter string.")
+    p_cluster.add_argument("--max-iter", type=int, default=50, help="Maximum iterations (default: 50).")
+    p_cluster.add_argument("--seed", type=int, default=42, help="Random seed (default: 42).")
+
     # 9. serve
     p_serve = subparsers.add_parser("serve", parents=[common_parser], help="Launch Material 3 Vector Studio UI.")
     p_serve.add_argument("--host", type=str, default="127.0.0.1", help="Host address (default: 127.0.0.1).")
@@ -1325,6 +1394,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "embed": cmd_embed,
         "benchmark": cmd_benchmark,
         "stats": cmd_stats,
+        "cluster": cmd_cluster,
         "list": cmd_list,
         "serve": cmd_serve,
         "mcp": cmd_mcp,

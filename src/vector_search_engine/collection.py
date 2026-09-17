@@ -639,3 +639,42 @@ class VectorCollection:
             total += len(batch)
         return total
 
+    def cluster(
+        self,
+        k: int = 3,
+        method: str = "kmeans",
+        filter_expr: Optional[Dict[str, Any]] = None,
+        max_iter: int = 50,
+        seed: Optional[int] = 42,
+    ):
+        """Run vector clustering and silhouette cohesion analysis on collection items.
+
+        Supports 'kmeans' (K-Means++) and 'hierarchical' top-down tree partitioning.
+        Optionally pre-filters items with metadata filter expressions.
+        """
+        from vector_search_engine.clustering import (
+            HierarchicalKMeansClusterer,
+            KMeansClusterer,
+        )
+
+        candidates = list(self._items.values())
+        if filter_expr:
+            candidates = [it for it in candidates if evaluate_filter(it.metadata, filter_expr)]
+
+        if method.lower() == "hierarchical":
+            clusterer = HierarchicalKMeansClusterer(
+                branch_factor=max(2, k),
+                max_depth=3,
+                metric=self.config.metric,
+                seed=seed,
+            )
+            return clusterer.fit(candidates)
+        else:
+            clusterer = KMeansClusterer(
+                k=k,
+                max_iter=max_iter,
+                metric=self.config.metric,
+                seed=seed,
+            )
+            return clusterer.fit(candidates)
+

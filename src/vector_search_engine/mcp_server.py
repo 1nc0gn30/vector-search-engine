@@ -460,6 +460,47 @@ class MCPServer:
                     },
                 },
             },
+            {
+                "name": "vector_cluster_analysis",
+                "description": "Run K-Means++ or Hierarchical vector clustering, medoid representative extraction, and silhouette cohesion analysis on a collection.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "collection": {
+                            "type": "string",
+                            "description": "Name of target collection.",
+                        },
+                        "k": {
+                            "type": "integer",
+                            "description": "Number of clusters to generate (default: 3).",
+                            "default": 3,
+                            "minimum": 1,
+                        },
+                        "method": {
+                            "type": "string",
+                            "description": "Clustering method: 'kmeans' (K-Means++) or 'hierarchical' (recursive partitioning).",
+                            "enum": ["kmeans", "hierarchical"],
+                            "default": "kmeans",
+                        },
+                        "filter": {
+                            "type": "object",
+                            "description": "Optional metadata filter expression to restrict clustered items.",
+                        },
+                        "max_iter": {
+                            "type": "integer",
+                            "description": "Maximum number of iterations for Lloyd's convergence (default: 50).",
+                            "default": 50,
+                            "minimum": 1,
+                        },
+                        "seed": {
+                            "type": "integer",
+                            "description": "Random seed for deterministic initialization (default: 42).",
+                            "default": 42,
+                        },
+                    },
+                    "required": ["collection"],
+                },
+            },
         ]
 
     # =========================================================================
@@ -540,6 +581,7 @@ class MCPServer:
             "vector_collection_stats": self._tool_collection_stats,
             "vector_list_collections": self._tool_list_collections,
             "vector_diagnostics": self._tool_diagnostics,
+            "vector_cluster_analysis": self._tool_cluster_analysis,
         }
 
         if name not in handler_map:
@@ -607,9 +649,10 @@ class MCPServer:
         upserted_ids: List[str] = []
 
         # Batch upsert
-        if "items" in args and isinstance(args["items"], list):
+        raw_items = args.get("items") or args.get("documents")
+        if raw_items and isinstance(raw_items, list):
             items_to_add: List[VectorItem] = []
-            for raw_item in args["items"]:
+            for raw_item in raw_items:
                 item_id = str(raw_item["id"])
                 doc = raw_item.get("document")
                 vec = raw_item.get("vector")
@@ -642,7 +685,7 @@ class MCPServer:
             collection.upsert(v_item)
             upserted_ids = [item_id]
         else:
-            raise ValueError("Must provide either 'id' or 'items' list for upsert.")
+            raise ValueError("Must provide either 'id', 'items', or 'documents' list for upsert.")
 
         if self.auto_persist:
             collection.save_to_disk()
@@ -852,6 +895,27 @@ class MCPServer:
             "data_directory": str(self.data_dir),
             "collections": collections_info,
         }
+
+    def _tool_cluster_analysis(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Handler for vector_cluster_analysis."""
+        col_name = str(args["collection"]).strip()
+        collection = self.get_collection(col_name)
+        k = int(args.get("k", 3))
+        method = str(args.get("method", "kmeans")).strip().lower()
+        filter_expr = args.get("filter")
+        max_iter = int(args.get("max_iter", 50))
+        seed = int(args.get("seed", 42))
+
+        result = collection.cluster(
+            k=k,
+            method=method,
+            filter_expr=filter_expr,
+            max_iter=max_iter,
+            seed=seed,
+        )
+        res = result.to_dict()
+        res["collection"] = col_name
+        return res
 
     def _tool_diagnostics(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handler for vector_diagnostics."""

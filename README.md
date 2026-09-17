@@ -180,6 +180,22 @@ $$\text{Score}_{\text{linear}}(d) = \alpha \cdot \text{Norm}(\text{Score}_{\text
   
   $$b_i = \mathbb{I}(x_i > 0)$$
 
+### 6. Vector Clustering & Silhouette Cohesion Analysis
+
+- **K-Means++ Seeding**: Probabilistically seeds initial cluster centroids proportionally to squared Euclidean/Cosine distance $D(\mathbf{x})^2$:
+
+  $$P(\mathbf{x}) = \frac{D(\mathbf{x})^2}{\sum_{\mathbf{x}'} D(\mathbf{x}')^2}$$
+
+- **Silhouette Coefficient**: Quantifies cluster compactness vs separation:
+  
+  $$s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1.0, 1.0]$$
+  
+  where $a(i)$ is the mean intra-cluster distance to all other vectors in cluster $C_A$, and $b(i) = \min_{C_B \neq C_A} \text{mean}(\text{dist}(i, C_B))$.
+
+- **Medoid Extraction**: Selects genuine representative exemplar item:
+  
+  $$m^* = \arg\min_{i \in C} \text{dist}(i, \mathbf{c})$$
+
 ---
 
 ## 🎨 Vector Studio Web UI
@@ -359,6 +375,8 @@ vector-search mcp
 | `POST` | `/api/collections/<name>/hybrid` | Execute hybrid dense + BM25 search |
 | `GET` | `/api/collections/<name>/stats` | Detailed collection & HNSW stats |
 | `GET` | `/api/collections/<name>/items` | Get items for 2D/3D visualization |
+| `GET` | `/api/collections/<name>/clusters` | Get K-Means/hierarchical cluster analysis |
+| `POST` | `/api/collections/<name>/clusters` | Execute clustering & silhouette cohesion analysis |
 | `POST` | `/api/benchmark` | Execute synthetic HNSW vs Flat benchmark |
 
 ---

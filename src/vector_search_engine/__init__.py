@@ -73,6 +73,16 @@ from vector_search_engine.hybrid_engine import (
 # Alias HybridEngine to HybridSearchEngine for public API consistency
 HybridEngine = HybridSearchEngine
 
+# Clustering and Partitioning
+from vector_search_engine.clustering import (
+    ClusterAnalysisResult,
+    ClusterInfo,
+    HierarchicalKMeansClusterer,
+    KMeansClusterer,
+    SilhouetteAnalyzer,
+    kmeans_plus_plus_init,
+)
+
 # VectorCollection and persistence
 from vector_search_engine.collection import (
     VectorCollection,
@@ -140,4 +150,10 @@ __all__ = [
     "export_collection",
     "load_collection",
     "ProductQuantizer",
+    "ClusterInfo",
+    "ClusterAnalysisResult",
+    "KMeansClusterer",
+    "HierarchicalKMeansClusterer",
+    "SilhouetteAnalyzer",
+    "kmeans_plus_plus_init",
 ]

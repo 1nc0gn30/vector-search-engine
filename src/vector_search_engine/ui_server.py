@@ -188,6 +188,15 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
                     items_data = [item.to_dict() for item in col._items.values()]
                 self._send_json({"collection": col_name, "count": len(items_data), "items": items_data})
                 return
+            elif len(parts) == 2 and parts[1] == "clusters":
+                # GET /api/collections/<name>/clusters
+                qs = parse_qs(parsed_url.query)
+                k = int(qs.get("k", [3])[0])
+                method = qs.get("method", ["kmeans"])[0]
+                with _REGISTRY_LOCK:
+                    res = col.cluster(k=k, method=method)
+                self._send_json(res.to_dict())
+                return
 
         # Static Asset Serving
         self._serve_static_file(path)
@@ -372,6 +381,24 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
                     "count": len(hybrid_res),
                     "latency_ms": round(latency_ms, 3),
                 })
+                return
+
+            elif len(parts) == 2 and parts[1] == "clusters":
+                # POST /api/collections/<name>/clusters
+                k = int(body.get("k") or 3)
+                method = str(body.get("method") or "kmeans")
+                filter_expr = body.get("filter") or body.get("filter_expr")
+                max_iter = int(body.get("max_iter") or 50)
+                seed = int(body.get("seed") or 42)
+                with _REGISTRY_LOCK:
+                    res = col.cluster(
+                        k=k,
+                        method=method,
+                        filter_expr=filter_expr,
+                        max_iter=max_iter,
+                        seed=seed,
+                    )
+                self._send_json(res.to_dict())
                 return
 
         self._send_error_json(f"Unknown POST endpoint: {path}", status_code=404)

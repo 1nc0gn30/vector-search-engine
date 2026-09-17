@@ -740,6 +740,9 @@
       <button class="tab-btn" onclick="showTab('manage')">
         📊 Documents & Collections
       </button>
+      <button class="tab-btn" onclick="showTab('clustering')">
+        🧩 Vector Clustering & Silhouette
+      </button>
     </div>
   </div>
 
@@ -1130,6 +1133,83 @@
 
           <div id="collectionDetailBox">
             <div style="color: var(--text-secondary);">Select a collection to view statistics.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: VECTOR CLUSTERING & SILHOUETTE -->
+    <div id="tab-clustering" class="view-panel">
+      <div class="grid-sidebar">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Cluster Controls</div>
+              <div class="card-subtitle">K-Means++ & Partitioning</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Algorithm</label>
+            <select class="form-control" id="clusterMethod">
+              <option value="kmeans" selected>K-Means++ (Centroids & Medoids)</option>
+              <option value="hierarchical">Hierarchical Vector Tree</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clusters (K)</label>
+            <input type="number" class="form-control" id="clusterK" value="3" min="1" max="20">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Iterations</label>
+            <input type="number" class="form-control" id="clusterMaxIter" value="50" min="1" max="200">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Random Seed</label>
+            <input type="number" class="form-control" id="clusterSeed" value="42">
+          </div>
+          <button class="btn btn-primary" style="width: 100%;" onclick="runClusterAnalysisUI()">
+            ⚡ Run Cluster Analysis
+          </button>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Cohesion & Silhouette Quality</div>
+                <div class="card-subtitle" id="clusterStatusSubtitle">Ready to analyze collection clusters</div>
+              </div>
+            </div>
+            <div class="stats-row" id="clusterStatsRow">
+              <div class="stat-pill">
+                <span class="stat-pill-label">Total Clusters</span>
+                <span class="stat-pill-val" id="clusterTotalPill">-</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Silhouette Score</span>
+                <span class="stat-pill-val" id="clusterSilPill" style="color: var(--g-green);">-</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Inertia (WCSS)</span>
+                <span class="stat-pill-val" id="clusterInertiaPill">-</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-pill-label">Computation Time</span>
+                <span class="stat-pill-val" id="clusterDurationPill">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Discovered Cluster Partitions & Medoids</div>
+                <div class="card-subtitle">Exemplars, dispersion, and metadata distributions</div>
+              </div>
+            </div>
+            <div id="clustersDeck" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+              <div style="color: var(--text-secondary); font-size: 13px;">Click 'Run Cluster Analysis' to partition vectors and discover representative exemplars.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1831,6 +1911,70 @@
         </div>
       `;
     }
+
+    async function runClusterAnalysisUI() {
+      if (!state.currentCollection) {
+        alert("Please select a collection first.");
+        return;
+      }
+      const method = document.getElementById('clusterMethod').value;
+      const k = parseInt(document.getElementById('clusterK').value) || 3;
+      const maxIter = parseInt(document.getElementById('clusterMaxIter').value) || 50;
+      const seed = parseInt(document.getElementById('clusterSeed').value) || 42;
+
+      document.getElementById('clusterStatusSubtitle').innerText = `Running ${method} clustering on ${state.currentCollection}...`;
+
+      const res = await apiFetch(`/api/collections/${state.currentCollection}/clusters`, {
+        method: 'POST',
+        body: JSON.stringify({ method, k, max_iter: maxIter, seed })
+      });
+
+      if (!res || !res.clusters) {
+        document.getElementById('clusterStatusSubtitle').innerText = "Clustering failed or collection is empty.";
+        return;
+      }
+
+      document.getElementById('clusterStatusSubtitle').innerText = `Completed in ${res.duration_ms} ms (${res.iterations} iterations, converged: ${res.converged})`;
+      document.getElementById('clusterTotalPill').innerText = res.clusters.length;
+      document.getElementById('clusterSilPill').innerText = res.silhouette_score.toFixed(4);
+      document.getElementById('clusterInertiaPill').innerText = res.inertia.toFixed(2);
+      document.getElementById('clusterDurationPill').innerText = `${res.duration_ms.toFixed(1)} ms`;
+
+      const deck = document.getElementById('clustersDeck');
+      if (res.clusters.length === 0) {
+        deck.innerHTML = `<div style="color: var(--text-secondary);">No clusters produced. Ensure collection has documents.</div>`;
+        return;
+      }
+
+      const clusterColors = ['#1a73e8', '#ea4335', '#34a853', '#f9ab00', '#9334e6', '#0097a7', '#e91e63'];
+      deck.innerHTML = res.clusters.map((c, idx) => {
+        const color = clusterColors[idx % clusterColors.length];
+        const metaBadges = Object.entries(c.top_metadata || {}).map(([key, vals]) => {
+          const topVal = Object.keys(vals)[0] || '';
+          return `<span class="badge" style="background: var(--bg-hover); color: var(--text-primary); margin-right: 4px; margin-bottom: 4px;">${key}:${topVal}</span>`;
+        }).join('');
+
+        return `
+          <div class="card" style="border-top: 4px solid ${color};">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-weight: 600; color: ${color};">Cluster #${c.cluster_id}</span>
+              <span class="badge" style="background: var(--bg-hover);">${c.size} items</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <strong>Medoid Exemplar:</strong> <code>${c.medoid_id || '(none)'}</code>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <strong>Dispersion:</strong> ${c.dispersion.toFixed(4)} | <strong>Diameter:</strong> ${c.diameter.toFixed(4)}
+            </div>
+            <div style="font-size: 11px; margin-top: 8px;">
+              <div style="font-weight: 500; margin-bottom: 4px;">Top Metadata:</div>
+              ${metaBadges || '<span style="color: var(--text-secondary);">(none)</span>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
   </script>
 </body>
 </html>
