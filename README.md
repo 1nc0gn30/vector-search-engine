@@ -1,12 +1,16 @@
 # 🔍 Vector Search Engine & Vector Studio
 
+[![Live App](https://img.shields.io/badge/Live%20Studio-vectorsearch.nullai.tech-00E5FF.svg)](https://vectorsearch.nullai.tech)
 [![CI](https://github.com/NullAITech/vector-search-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/NullAITech/vector-search-engine/actions/workflows/ci.yml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Dependencies: Zero](https://img.shields.io/badge/dependencies-0-success.svg)](pyproject.toml)
 [![MCP Server](https://img.shields.io/badge/MCP-Protocol%202024--11--05-blueviolet.svg)](src/vector_search_engine/mcp_server.py)
+[![Monetization: Stripe + Solana](https://img.shields.io/badge/Checkout-$19%20Founding%20Lifetime-14F195.svg)](https://buy.stripe.com/7sI7sA8hM2X8eFG8ww)
 
-A production-grade, **pure Python standard library (zero external runtime dependencies)** vector database and approximate nearest neighbor (ANN) search engine featuring **Hierarchical Navigable Small World (HNSW)** graph indexing, **Inverted File (IVF)** clustering, **Okapi BM25** lexical retrieval, **Hybrid Search** with **Reciprocal Rank Fusion (RRF)**, **Model Context Protocol (MCP)** server integration for AI assistants, and **Vector Studio** interactive web UI (influenced by Material 3 design).
+A production-grade, **pure Python standard library (zero external runtime dependencies)** vector database and approximate nearest neighbor (ANN) search engine featuring **Hierarchical Navigable Small World (HNSW)** graph indexing, **Inverted File (IVF)** clustering, **Okapi BM25** lexical retrieval, **Hybrid Search** with **Reciprocal Rank Fusion (RRF)**, **Model Context Protocol (MCP)** server integration for AI assistants, and **100% in-browser Vector Studio** interactive web UI (with zero backend dependencies on Netlify).
+
+**Engineered by Neal Frazier Tech ([@1nc0gn30](https://github.com/1nc0gn30)) • NullAI Platform**
 
 ---
 
