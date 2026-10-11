@@ -54,6 +54,24 @@ EMBEDDED_HTML_FALLBACK = """<!DOCTYPE html>
 </html>"""
 
 
+def _is_local_origin(origin) -> bool:
+    """True for no Origin (CLI/curl/same-origin GET) or a localhost origin."""
+    if not origin:
+        return True
+    from urllib.parse import urlparse
+    try:
+        u = urlparse(origin)
+    except Exception:
+        return False
+    return u.scheme in ("http", "https") and (u.hostname or "") in ("localhost", "127.0.0.1", "::1")
+
+
+def _cors_origin(handler) -> str:
+    """Echo the Origin only when it is local; never '*'."""
+    origin = handler.headers.get("Origin", "")
+    return origin if origin and _is_local_origin(origin) else "http://127.0.0.1"
+
+
 class StudioRequestHandler(BaseHTTPRequestHandler):
     """HTTP Request Handler providing REST API and static asset delivery."""
 
@@ -64,7 +82,7 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
     ) -> None:
         self.send_response(status_code)
         self.send_header("Content-Type", content_type)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", _cors_origin(self))
         self.send_header(
             "Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"
         )
@@ -84,7 +102,7 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
             self.send_response(status_code)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Origin", _cors_origin(self))
             self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
             self.end_headers()
@@ -210,7 +228,7 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(content)))
-                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Origin", _cors_origin(self))
                 self.end_headers()
                 self.wfile.write(content)
             else:
@@ -218,7 +236,7 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(content)))
-                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Origin", _cors_origin(self))
                 self.end_headers()
                 self.wfile.write(content)
             return
@@ -233,7 +251,7 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", mime_type)
             self.send_header("Content-Length", str(len(content)))
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Origin", _cors_origin(self))
             self.end_headers()
             self.wfile.write(content)
         else:
@@ -241,6 +259,12 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         """Route POST requests for collection creation, inserts, queries, benchmarks."""
+
+        if not _is_local_origin(self.headers.get("Origin")):
+
+            self.send_error(403, "Cross-origin request blocked")
+
+            return
         parsed_url = urlparse(self.path)
         path = unquote(parsed_url.path)
 
@@ -405,6 +429,12 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
 
     def do_DELETE(self) -> None:
         """Route DELETE requests for collection deletion."""
+
+        if not _is_local_origin(self.headers.get("Origin")):
+
+            self.send_error(403, "Cross-origin request blocked")
+
+            return
         parsed_url = urlparse(self.path)
         path = unquote(parsed_url.path)
 
@@ -520,7 +550,7 @@ def start_ui_server(
     return server
 
 
-def run_ui_server(host: str = "0.0.0.0", port: int = 8000) -> None:
+def run_ui_server(host: str = "127.0.0.1", port: int = 8000) -> None:
     """Run UI server in foreground."""
     server = start_ui_server(host=host, port=port, background=False)
     print(f"🚀 Vector Studio UI running at http://{host}:{port}")
@@ -535,7 +565,7 @@ def run_ui_server(host: str = "0.0.0.0", port: int = 8000) -> None:
 def main() -> None:
     """CLI entry point for running UI server."""
     parser = argparse.ArgumentParser(description="Vector Studio UI Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host interface to bind (default: 0.0.0.0)")
+    parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind (default: 127.0.0.1; use 0.0.0.0 only on trusted networks)")
     parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
     args = parser.parse_args()
     run_ui_server(host=args.host, port=args.port)
