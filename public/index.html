@@ -860,7 +860,9 @@
       overflow: hidden;
     }
     .paywall-wrap.locked #searchResultsDeck,
-    .paywall-wrap.locked #blendedRankDeck {
+    .paywall-wrap.locked #blendedRankDeck,
+    .paywall-wrap.is-locked #searchResultsDeck,
+    .paywall-wrap.is-locked #blendedRankDeck {
       filter: blur(6px);
       user-select: none;
       pointer-events: none;
@@ -879,7 +881,8 @@
       padding: 1rem;
       z-index: 20;
     }
-    .paywall-wrap.locked .paywall-overlay {
+    .paywall-wrap.locked .paywall-overlay,
+    .paywall-wrap.is-locked .paywall-overlay {
       display: flex;
     }
     .paywall-overlay-title {
@@ -910,6 +913,32 @@
     }
     .pro-modal-backdrop.open {
       display: flex;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(14, 18, 27, 0.95);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #F8FAFC;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
     .pro-modal-card {
       background: #12121A;
@@ -1019,7 +1048,7 @@
 <div class="zoth-brand-bar"><span class="zoth-z">Z</span><span class="zoth-name">Zoth Studio</span><span class="zoth-tool">Vector Search Engine</span><span class="zoth-spacer"></span><span class="zoth-badge">NULLAI · SOVEREIGN</span></div>
 
 <!-- High-Converting Glassmorphic Sales Banner -->
-<div class="sales-banner">
+<div class="sales-banner" id="salesBannerWrap">
   <div class="sales-banner-content">
     <span class="sales-tag">🔥 FOUNDING MEMBER PRO</span>
     <span class="sales-title">HNSW Vector Database & Okapi BM25 Hybrid Studio</span>
@@ -1032,7 +1061,7 @@
     <button class="btn-checkout-solana" onclick="openSolanaPay()">
       <span>🪐 Pay with SOL / USDC</span>
     </button>
-    <button class="btn-activate-key" onclick="openLicensePrompt()">Activate Key</button>
+    <button class="btn-activate-key" id="btn-paywall-key" onclick="openLicenseModal()">Activate Key</button>
   </div>
 </div>
 
@@ -1049,7 +1078,7 @@
         </div>
         <div class="brand-title">
           Vector Studio
-          <span class="brand-badge" id="licenseBadge" onclick="openLicensePrompt()" style="cursor: pointer;">⚡ FREE TIER</span>
+          <span class="brand-badge" id="licenseBadge" onclick="openLicenseModal()" style="cursor: pointer;">⚡ FREE TIER</span>
         </div>
       </a>
 
@@ -1228,16 +1257,19 @@
             </div>
           </div>
 
-          <div class="paywall-wrap locked" id="searchPaywallWrap">
+          <div class="paywall-wrap locked is-locked" id="searchPaywallWrap" data-alias="codePaywallWrap">
             <div class="results-deck" id="searchResultsDeck">
               <div style="text-align: center; color: var(--text-tertiary); padding: 40px;">
                 Enter a query or click "Run Search" to simulate similarity search.
               </div>
             </div>
-            <div class="paywall-overlay" id="searchOverlay">
+            <div class="paywall-overlay" id="searchOverlay" data-alias="paywallOverlay">
               <div class="paywall-overlay-title">🔒 SIMILARITY RESULTS LOCKED</div>
               <div class="paywall-overlay-desc">Ranked nearest neighbors, distance vectors, and similarity scores are blurred on free tier.</div>
-              <a class="btn-checkout-stripe" href="https://buy.stripe.com/7sI7sA8hM2X8eFG8ww" target="_blank" rel="noopener">Unlock Pro Access ($19)</a>
+              <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                <a class="btn-checkout-stripe" href="https://buy.stripe.com/7sI7sA8hM2X8eFG8ww" target="_blank" rel="noopener">Unlock Pro Access ($19)</a>
+                <button class="btn btn-outlined" style="font-size: 12px; padding: 6px 12px; border-color: rgba(212,175,55,0.5); color: #F5E6AB;" onclick="openLicenseModal()">Enter Key</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1365,12 +1397,15 @@
         <!-- Blended RRF Rank Column -->
         <div class="card">
           <div class="card-title" style="color: var(--g-green);">3. Blended Fusion Rank</div>
-          <div class="paywall-wrap locked" id="hybridPaywallWrap">
+          <div class="paywall-wrap locked is-locked" id="hybridPaywallWrap">
             <div class="results-deck" id="blendedRankDeck" style="max-height: 450px;"></div>
             <div class="paywall-overlay" id="hybridOverlay">
               <div class="paywall-overlay-title">⚖️ HYBRID FUSION BLURRED</div>
               <div class="paywall-overlay-desc">Reciprocal Rank Fusion outputs and blended rankings require Pro active status.</div>
-              <a class="btn-checkout-stripe" href="https://buy.stripe.com/7sI7sA8hM2X8eFG8ww" target="_blank" rel="noopener">Unlock Pro Access ($19)</a>
+              <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                <a class="btn-checkout-stripe" href="https://buy.stripe.com/7sI7sA8hM2X8eFG8ww" target="_blank" rel="noopener">Unlock Pro Access ($19)</a>
+                <button class="btn btn-outlined" style="font-size: 12px; padding: 6px 12px; border-color: rgba(212,175,55,0.5); color: #F5E6AB;" onclick="openLicenseModal()">Enter Key</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1460,6 +1495,11 @@
 
           <div class="card-title" style="font-size: 14px; margin-top: 24px; margin-bottom: 8px;">Detailed Execution Log</div>
           <pre class="code-box" id="benchLogBox" style="height: 160px;">Click 'Run Benchmark Suite' to generate vectors and execute tests.</pre>
+          <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
+            <button class="btn btn-outlined" id="btnExportBenchmark" onclick="exportBenchmarkData()" style="padding: 8px 16px; border-color: rgba(212,175,55,0.5); color: #F5E6AB;">
+              📊 Export Benchmark Report (JSON)
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2209,7 +2249,7 @@
       const filterStr = document.getElementById('searchFilterInput').value.trim();
       let filterObj = null;
       if (filterStr) {
-        try { filterObj = JSON.parse(filterStr); } catch (e) { alert("Invalid JSON filter: " + e.message); return; }
+        try { filterObj = JSON.parse(filterStr); } catch (e) { showToast("Invalid JSON filter: " + e.message, "error"); return; }
       }
 
       const startTime = performance.now();
@@ -2483,7 +2523,7 @@
       const metric = document.getElementById('modalColMetric').value;
       const indexType = document.getElementById('modalColIndexType').value;
 
-      if (!name) { alert("Please enter collection name"); return; }
+      if (!name) { showToast("Please enter collection name", "error"); return; }
       await apiFetch('/api/collections', {
         method: 'POST',
         body: JSON.stringify({ name, dimension: dim, metric, index_type: indexType })
@@ -2532,7 +2572,7 @@
         body: JSON.stringify({ documents: [{ id, document: text, vector, metadata }] })
       });
 
-      alert("Document inserted successfully!");
+      showToast("Document inserted successfully!", "success");
       await loadCollectionItems();
     }
 
@@ -2548,7 +2588,7 @@
 
     async function runClusterAnalysisUI() {
       if (!state.currentCollection) {
-        alert("Please select a collection first.");
+        showToast("Please select a collection first.", "warning");
         return;
       }
       const method = document.getElementById('clusterMethod').value;
@@ -2612,10 +2652,33 @@
     /* ---- License & Paywall Management ---- */
     let isPro = false;
 
+    function showToast(msg, type = 'info') {
+      let toast = document.getElementById('toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        toast.innerHTML = '<span id="toast-message"></span>';
+        document.body.appendChild(toast);
+      }
+      const msgEl = document.getElementById('toast-message') || toast;
+      msgEl.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
     function checkLicenseState() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('licensed') === 'true' || localStorage.getItem('vector_studio_pro_licensed') === 'true' || localStorage.getItem('vector-search-engine_pro_licensed') === 'true') {
+      if (urlParams.get('licensed') === 'true' || 
+          localStorage.getItem('vector_studio_pro_licensed') === 'true' || 
+          localStorage.getItem('vector-search-engine_pro_licensed') === 'true' ||
+          localStorage.getItem('sovereign_pro_licensed') === 'true' ||
+          localStorage.getItem('pro_licensed') === 'true') {
         activateProState();
+        if (urlParams.has('licensed')) {
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
       } else {
         updateProUI();
       }
@@ -2625,8 +2688,13 @@
       isPro = true;
       localStorage.setItem('vector_studio_pro_licensed', 'true');
       localStorage.setItem('vector-search-engine_pro_licensed', 'true');
+      localStorage.setItem('sovereign_pro_licensed', 'true');
+      localStorage.setItem('pro_licensed', 'true');
       updateProUI();
-      document.querySelectorAll('.paywall-wrap').forEach(w => w.classList.remove('locked'));
+      document.querySelectorAll('.paywall-wrap').forEach(w => {
+        w.classList.remove('locked');
+        w.classList.remove('is-locked');
+      });
     }
 
     function updateProUI() {
@@ -2637,21 +2705,55 @@
         badge.style.color = isPro ? '#34a853' : '#ef4444';
         badge.style.border = isPro ? '1px solid #34a853' : '1px solid rgba(239, 68, 68, 0.4)';
       }
-      const banner = document.querySelector('.sales-banner');
+      const banner = document.getElementById('salesBannerWrap') || document.querySelector('.sales-banner');
       if (banner) banner.style.display = isPro ? 'none' : 'flex';
     }
 
-    function openLicensePrompt(providedKey) {
-      let key = providedKey;
-      if (!key && typeof prompt === 'function') {
-        try { key = prompt('Enter your license key or receipt email (e.g. VECTOR-PRO-2026):'); } catch(e) {}
-      }
-      if (key && (key.trim().length > 3 || key.includes('@'))) {
-        activateProState();
-        closeProPaywallModal();
-        if (!providedKey) alert('⭐ Sovereign Pro Activated! All vector similarity outputs and benchmarks unlocked.');
+    function openLicenseModal() {
+      const modal = document.getElementById('licenseModal') || document.getElementById('proPaywallModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('open');
       }
     }
+
+    function closeLicenseModal() {
+      const modal = document.getElementById('licenseModal') || document.getElementById('proPaywallModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('open');
+      }
+    }
+
+    function openProPaywallModal() {
+      openLicenseModal();
+    }
+
+    function closeProPaywallModal() {
+      closeLicenseModal();
+    }
+
+    function openLicensePrompt(providedKey) {
+      if (providedKey && (providedKey.trim().length > 3 || providedKey.includes('@'))) {
+        activateLicenseKey(providedKey);
+      } else {
+        openLicenseModal();
+      }
+    }
+
+    function activateLicenseKey(customKey) {
+      const input = document.getElementById('license-input') || document.getElementById('licenseKeyInput');
+      const key = (customKey || (input ? input.value : '')).trim();
+      if (!key || key.length < 3) {
+        showToast('⚠️ Please enter your license key or email address.', 'error');
+        return false;
+      }
+      activateProState();
+      closeLicenseModal();
+      showToast('⭐ Sovereign Pro Activated! All vector similarity outputs and benchmarks unlocked.', 'success');
+      return true;
+    }
+    window.activateLicenseSubmit = activateLicenseKey;
 
     function openSolanaPay() {
       if (window.DePayButtons) {
@@ -2664,22 +2766,16 @@
         });
       } else {
         const address = 'GG2eQbVh8ut1BK6j1A2tz7pSySdLpD38BgyEhGcxdXoK';
-        navigator.clipboard.writeText(address);
-        alert('DePay Solana Address copied to clipboard:\n' + address + '\n\nSend $19 in SOL or USDC, then click Activate Key.');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(address).catch(() => {});
+        }
+        showToast('Solana address copied to clipboard! Send $19 in SOL or USDC, then activate key.', 'info');
       }
-    }
-
-    function openProPaywallModal() {
-      document.getElementById('proPaywallModal').classList.add('open');
-    }
-
-    function closeProPaywallModal() {
-      document.getElementById('proPaywallModal').classList.remove('open');
     }
 
     function exportBenchmarkData() {
       if (!isPro) {
-        openProPaywallModal();
+        openLicenseModal();
         return;
       }
       const data = {
@@ -2703,9 +2799,9 @@
   </script>
 
   <!-- Pro Paywall Modal -->
-  <div class="pro-modal-backdrop" id="proPaywallModal">
+  <div class="pro-modal-backdrop" id="licenseModal" data-alias="paywall-modal">
     <div class="pro-modal-card">
-      <button class="pro-modal-close" onclick="closeProPaywallModal()">&times;</button>
+      <button class="pro-modal-close" onclick="closeLicenseModal()">&times;</button>
       <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.5rem;">
         <span style="font-size:1.4rem;">⭐</span>
         <h3 style="color:#FFFFFF; font-size:1.2rem;">Upgrade to Vector Studio Pro</h3>
@@ -2733,12 +2829,15 @@
       </div>
 
       <div style="margin-top:1.25rem; display:flex; gap:0.5rem; justify-content:center; align-items:center; flex-wrap:wrap;">
-        <input type="text" id="licenseKeyInput" placeholder="VECTOR-PRO-2026 or receipt email" style="padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-size:12px; max-width:240px; flex:1;">
-        <button id="btnActivateKey" class="btn-activate-key" style="margin:0; padding:8px 14px;" onclick="openLicensePrompt(document.getElementById('licenseKeyInput').value)">Activate Key</button>
+        <input type="text" id="license-input" data-alias="licenseKeyInput" placeholder="VECTOR-PRO-2026 or receipt email" style="padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-size:12px; max-width:240px; flex:1;">
+        <button id="btnActivateKey" class="btn-activate-key" style="margin:0; padding:8px 14px;" onclick="activateLicenseKey()">Activate Key</button>
       </div>
     </div>
   </div>
   
-  <footer class="zoth-brand-footer"><div class="zoth-foot-name">Zoth Studio</div><div>NullAI Tech &middot; Sovereign Local-First AI &middot; <a href="https://github.com/1nc0gn30" target="_blank" rel="noopener">GitHub</a></div></footer>
+  <footer class="zoth-brand-footer" style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-top:1px solid rgba(255,255,255,0.08); font-size:12px; color:var(--text-secondary); flex-wrap:wrap; gap:12px;">
+    <div class="zoth-foot-name">Vector Studio v2.5.0</div>
+    <div>Engineered by Neal Frazier Tech (<a href="https://github.com/1nc0gn30/vector-search-engine" target="_blank" rel="noopener" style="color:var(--g-blue); text-decoration:none;">@1nc0gn30</a>) &bull; <a href="https://nullai.tech" target="_blank" rel="noopener" style="color:var(--text-secondary); text-decoration:none;">NullAI Platform</a></div>
+  </footer>
 </body>
 </html>

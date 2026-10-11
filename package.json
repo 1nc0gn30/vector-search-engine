@@ -1,6 +1,6 @@
 {
   "name": "vector-search-engine",
-  "version": "2.0.0",
+  "version": "2.5.0",
   "description": "Zero-Dependency HNSW & IVF Vector Database, BM25 Hybrid Search, MMR Diversity & Clustering — Desktop Workstation",
   "main": "electron/main.cjs",
   "bin": {
@@ -8,10 +8,12 @@
     "vector-search": "./bin/vector-search.js"
   },
   "scripts": {
-    "start": "python3 -m vector_search_engine.cli serve --port 8093",
+    "serve": "python3 -m http.server 8121 --directory public",
+    "start": "python3 -m vector_search_engine.cli serve --port 8121",
     "electron": "electron .",
     "app": "electron .",
-    "test": "pytest tests/"
+    "test:ui": "python3 scripts/verify_ui.py",
+    "test": "pytest tests/ && python3 scripts/verify_ui.py"
   },
   "keywords": [
     "vector-search",
