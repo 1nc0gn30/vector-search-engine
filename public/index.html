@@ -5,19 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vector Studio | HNSW Vector Search Engine & Hybrid Lab</title>
   <meta name="description" content="100% in-browser vector search engine, HNSW graph index visualizer, Okapi BM25 hybrid search, and reciprocal rank fusion. Zero cloud egress.">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" href="icon.png">
+  <!-- Favicon & Brand Icons -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icon.png">
+  <link rel="apple-touch-icon" href="/assets/icon.png">
 
   <!-- OpenGraph & Twitter Meta -->
   <meta property="og:title" content="Vector Studio | HNSW Vector Search Engine & Hybrid Lab">
   <meta property="og:description" content="100% in-browser vector search engine, HNSW multi-layer graph visualizer, and BM25 hybrid search with zero cloud egress.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vectorsearch.nullai.tech">
-  <meta property="og:image" content="https://vectorsearch.nullai.tech/icon.png">
+  <meta property="og:image" content="https://vectorsearch.nullai.tech/assets/banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Vector Studio HNSW Vector Search Engine & Hybrid Lab banner">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@1nc0gn30">
   <meta name="twitter:creator" content="@1nc0gn30">
-  <meta name="twitter:image" content="https://vectorsearch.nullai.tech/icon.png">
+  <meta name="twitter:image" content="https://vectorsearch.nullai.tech/assets/banner.png">
+  <meta name="twitter:image:alt" content="Vector Studio HNSW Vector Search Engine & Hybrid Lab banner">
 
   <!-- AEO & SEO Schema.org Graph -->
   <script type="application/ld+json">
@@ -1033,7 +1039,8 @@
 <!-- Header -->
   <header>
     <div class="header-container">
-      <a href="#" class="logo-section">
+      <a href="#" class="logo-section" style="display: flex; align-items: center; gap: 8px;">
+        <img src="/assets/icon.png" alt="Vector Studio Logo" class="brand-icon" style="width:28px;height:28px;border-radius:6px;object-fit:cover;box-shadow:0 0 10px rgba(0,229,255,0.4);">
         <div class="google-dots">
           <div class="dot dot-blue"></div>
           <div class="dot dot-red"></div>
@@ -1042,7 +1049,7 @@
         </div>
         <div class="brand-title">
           Vector Studio
-          <span class="brand-badge" id="header-pro-badge">FREE TIER</span>
+          <span class="brand-badge" id="licenseBadge" onclick="openLicensePrompt()" style="cursor: pointer;">⚡ FREE TIER</span>
         </div>
       </a>
 
@@ -2607,29 +2614,42 @@
 
     function checkLicenseState() {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('licensed') === 'true' || localStorage.getItem('vector_studio_pro_licensed') === 'true') {
+      if (urlParams.get('licensed') === 'true' || localStorage.getItem('vector_studio_pro_licensed') === 'true' || localStorage.getItem('vector-search-engine_pro_licensed') === 'true') {
         activateProState();
+      } else {
+        updateProUI();
       }
     }
 
     function activateProState() {
       isPro = true;
       localStorage.setItem('vector_studio_pro_licensed', 'true');
-      const badge = document.getElementById('header-pro-badge');
-      if (badge) {
-        badge.innerText = '⭐ PRO ACTIVE';
-        badge.style.background = 'rgba(52, 168, 83, 0.2)';
-        badge.style.color = '#34a853';
-      }
+      localStorage.setItem('vector-search-engine_pro_licensed', 'true');
+      updateProUI();
       document.querySelectorAll('.paywall-wrap').forEach(w => w.classList.remove('locked'));
     }
 
-    function openLicensePrompt() {
-      const key = prompt('Enter your license key or receipt email:');
+    function updateProUI() {
+      const badge = document.getElementById('licenseBadge') || document.getElementById('header-pro-badge');
+      if (badge) {
+        badge.innerHTML = isPro ? '⭐ PRO ACTIVE' : '⚡ FREE TIER';
+        badge.style.background = isPro ? 'rgba(52, 168, 83, 0.2)' : 'rgba(239, 68, 68, 0.15)';
+        badge.style.color = isPro ? '#34a853' : '#ef4444';
+        badge.style.border = isPro ? '1px solid #34a853' : '1px solid rgba(239, 68, 68, 0.4)';
+      }
+      const banner = document.querySelector('.sales-banner');
+      if (banner) banner.style.display = isPro ? 'none' : 'flex';
+    }
+
+    function openLicensePrompt(providedKey) {
+      let key = providedKey;
+      if (!key && typeof prompt === 'function') {
+        try { key = prompt('Enter your license key or receipt email (e.g. VECTOR-PRO-2026):'); } catch(e) {}
+      }
       if (key && (key.trim().length > 3 || key.includes('@'))) {
         activateProState();
         closeProPaywallModal();
-        alert('⭐ Sovereign Pro Activated! All vector similarity outputs and benchmarks unlocked.');
+        if (!providedKey) alert('⭐ Sovereign Pro Activated! All vector similarity outputs and benchmarks unlocked.');
       }
     }
 
@@ -2712,8 +2732,9 @@
         </button>
       </div>
 
-      <div style="margin-top:1.25rem; text-align:center;">
-        <button class="btn-activate-key" onclick="openLicensePrompt()">Have a license key or receipt email? Click to Activate</button>
+      <div style="margin-top:1.25rem; display:flex; gap:0.5rem; justify-content:center; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="licenseKeyInput" placeholder="VECTOR-PRO-2026 or receipt email" style="padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-size:12px; max-width:240px; flex:1;">
+        <button id="btnActivateKey" class="btn-activate-key" style="margin:0; padding:8px 14px;" onclick="openLicensePrompt(document.getElementById('licenseKeyInput').value)">Activate Key</button>
       </div>
     </div>
   </div>
