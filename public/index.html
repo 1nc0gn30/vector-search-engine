@@ -1050,7 +1050,7 @@
 <!-- High-Converting Glassmorphic Sales Banner -->
 <div class="sales-banner" id="salesBannerWrap">
   <div class="sales-banner-content">
-    <span class="sales-tag">🔥 FOUNDING MEMBER PRO</span>
+    <span class="sales-tag">★ FOUNDING MEMBER PRO</span>
     <span class="sales-title">HNSW Vector Database & Okapi BM25 Hybrid Studio</span>
     <span class="sales-price"><del>$79</del> <strong>$19 Lifetime</strong></span>
   </div>
@@ -1059,7 +1059,7 @@
       <span>⚡ Unlock via Stripe ($19)</span>
     </a>
     <button class="btn-checkout-solana" onclick="openSolanaPay()">
-      <span>🪐 Pay with SOL / USDC</span>
+      <span>✦ Pay with SOL / USDC</span>
     </button>
     <button class="btn-activate-key" id="btn-paywall-key" onclick="openLicenseModal()">Activate Key</button>
   </div>
@@ -1069,7 +1069,7 @@
   <header>
     <div class="header-container">
       <a href="#" class="logo-section" style="display: flex; align-items: center; gap: 8px;">
-        <img src="/assets/icon.png" alt="Vector Studio Logo" class="brand-icon" style="width:28px;height:28px;border-radius:6px;object-fit:cover;box-shadow:0 0 10px rgba(0,229,255,0.4);">
+        <img src="assets/icon.png" alt="Vector Studio Logo" class="brand-icon" style="width:28px;height:28px;border-radius:6px;object-fit:cover;box-shadow:0 0 10px rgba(0,229,255,0.4);">
         <div class="google-dots">
           <div class="dot dot-blue"></div>
           <div class="dot dot-red"></div>
@@ -1112,13 +1112,13 @@
   <div class="tabs-bar">
     <div class="tabs-container">
       <button class="tab-btn active" onclick="showTab('explorer')">
-        🌌 Vector Space Explorer
+        ✦ Vector Space Explorer
       </button>
       <button class="tab-btn" onclick="showTab('search')">
-        🔍 Live Search Simulator
+        ⌕ Live Search Simulator
       </button>
       <button class="tab-btn" onclick="showTab('hnsw')">
-        🕸️ HNSW Multi-Layer Inspector
+        ◈ HNSW Multi-Layer Inspector
       </button>
       <button class="tab-btn" onclick="showTab('hybrid')">
         ⚖️ Hybrid & RRF Blending Lab
@@ -1127,10 +1127,10 @@
         ⚡ Benchmark Console
       </button>
       <button class="tab-btn" onclick="showTab('manage')">
-        📊 Documents & Collections
+        ◈ Documents & Collections
       </button>
       <button class="tab-btn" onclick="showTab('clustering')">
-        🧩 Vector Clustering & Silhouette
+        ✦ Vector Clustering & Silhouette
       </button>
     </div>
   </div>
@@ -1173,7 +1173,7 @@
 
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 24px;">
             <button class="btn btn-outlined" onclick="resetViewportCamera()">
-              🔄 Reset Camera
+              ↻ Reset Camera
             </button>
             <button class="btn btn-tonal" onclick="loadSampleDemoData()">
               ✨ Seed Demo AI Dataset
@@ -1243,7 +1243,7 @@
               ⚡ Run Search
             </button>
             <button class="btn btn-outlined" onclick="generateRandomSearchQuery()">
-              🎲 Random
+              ✦ Random
             </button>
           </div>
         </div>
@@ -1264,7 +1264,7 @@
               </div>
             </div>
             <div class="paywall-overlay" id="searchOverlay" data-alias="paywallOverlay">
-              <div class="paywall-overlay-title">🔒 SIMILARITY RESULTS LOCKED</div>
+              <div class="paywall-overlay-title">★ SIMILARITY RESULTS LOCKED</div>
               <div class="paywall-overlay-desc">Ranked nearest neighbors, distance vectors, and similarity scores are blurred on free tier.</div>
               <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; justify-content: center;">
                 <a class="btn-checkout-stripe" href="https://buy.stripe.com/4gMfZg9AheOsdhKbcAfw40L" target="_blank" rel="noopener">Unlock Pro Access ($19)</a>
@@ -1448,7 +1448,7 @@
           </div>
 
           <button class="btn btn-primary" style="width: 100%;" id="runBenchmarkBtn" onclick="runSyntheticBenchmark()">
-            🚀 Run Benchmark Suite
+            ★ Run Benchmark Suite
           </button>
         </div>
 
@@ -1497,7 +1497,7 @@
           <pre class="code-box" id="benchLogBox" style="height: 160px;">Click 'Run Benchmark Suite' to generate vectors and execute tests.</pre>
           <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
             <button class="btn btn-outlined" id="btnExportBenchmark" onclick="exportBenchmarkData()" style="padding: 8px 16px; border-color: rgba(212,175,55,0.5); color: #F5E6AB;">
-              📊 Export Benchmark Report (JSON)
+              ◈ Export Benchmark Report (JSON)
             </button>
           </div>
         </div>
@@ -2489,7 +2489,7 @@
       });
 
       btn.disabled = false;
-      btn.innerText = "🚀 Run Benchmark Suite";
+      btn.innerText = "★ Run Benchmark Suite";
 
       if (res) {
         document.getElementById('benchHnswQps').innerText = `${Math.round(res.hnsw_qps)} QPS`;
