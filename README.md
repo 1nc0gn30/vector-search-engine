@@ -1,3 +1,9 @@
+<div align="center">
+  <img src="assets/hero-banner.svg" alt="Vector Search Engine &amp; Studio — Sovereign Architecture Banner" width="100%" />
+</div>
+
+<br />
+
 # 🔍 Vector Search Engine & Vector Studio
 
 [![Live App](https://img.shields.io/badge/Live%20Studio-vectorsearch.nullai.tech-00E5FF.svg)](https://vectorsearch.nullai.tech)
