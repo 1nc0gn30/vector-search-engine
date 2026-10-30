@@ -912,9 +912,29 @@ def cmd_serve(args: argparse.Namespace, ui: TerminalUI) -> int:
     open_browser = getattr(args, "open_browser", False) or getattr(args, "open", False)
 
     try:
-        from vector_search_engine.server import run_server
-        ui.info(f"Starting Vector Studio server at http://{host}:{port}...")
-        run_server(host=host, port=port, data_dir=data_dir, open_browser=open_browser)
+        import webbrowser
+        from vector_search_engine.ui_server import start_ui_server
+        loaded_cols: Dict[str, VectorCollection] = {}
+        for fpath in sorted(data_dir.glob("*.json")):
+            try:
+                col = VectorCollection.load_from_disk(fpath)
+                loaded_cols[col.config.name] = col
+            except Exception:
+                pass
+        ui.header(f"Vector Studio Server running at http://{host}:{port}")
+        ui.info(f"Loaded {len(loaded_cols)} collection(s) from {data_dir}. Serving REST API + Studio UI...")
+        server = start_ui_server(host=host, port=port, collections=loaded_cols, background=False)
+        if open_browser:
+            try:
+                webbrowser.open(f"http://{host}:{port}")
+            except Exception:
+                pass
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            ui.info("\nServer stopped.")
+        finally:
+            server.server_close()
         return 0
     except ImportError:
         # Standalone simple HTTP server fallback

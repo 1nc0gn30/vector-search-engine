@@ -754,16 +754,7 @@
 
     /* High-Converting Sales Funnel Banner */
     .sales-banner {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(18, 18, 26, 0.95) 100%);
-      border-bottom: 1px solid rgba(212, 175, 55, 0.35);
-      padding: 0.85rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 100;
+      display: none !important;
     }
     .sales-banner-content {
       display: flex;
@@ -1078,7 +1069,7 @@
         </div>
         <div class="brand-title">
           Vector Studio
-          <span class="brand-badge" id="licenseBadge" onclick="openLicenseModal()" style="cursor: pointer;">⚡ FREE TIER</span>
+          <span class="brand-badge" id="licenseBadge" style="cursor: default; background: rgba(52, 168, 83, 0.2); color: #34a853; border: 1px solid #34a853;">✦ 100% UNLOCKED</span>
         </div>
       </a>
 
@@ -2700,10 +2691,10 @@
     function updateProUI() {
       const badge = document.getElementById('licenseBadge') || document.getElementById('header-pro-badge');
       if (badge) {
-        badge.innerHTML = isPro ? '⭐ PRO ACTIVE' : '⚡ FREE TIER';
-        badge.style.background = isPro ? 'rgba(52, 168, 83, 0.2)' : 'rgba(239, 68, 68, 0.15)';
-        badge.style.color = isPro ? '#34a853' : '#ef4444';
-        badge.style.border = isPro ? '1px solid #34a853' : '1px solid rgba(239, 68, 68, 0.4)';
+        badge.innerHTML = '✦ 100% UNLOCKED';
+        badge.style.background = 'rgba(52, 168, 83, 0.2)';
+        badge.style.color = '#34a853';
+        badge.style.border = '1px solid #34a853';
       }
       const banner = document.getElementById('salesBannerWrap') || document.querySelector('.sales-banner');
       if (banner) banner.style.display = isPro ? 'none' : 'flex';
