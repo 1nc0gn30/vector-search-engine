@@ -155,10 +155,25 @@
 }
 
 /* ---- Base body ---- */
-body {
+html[data-theme="dark"] body {
   background: var(--zoth-void) !important;
   color: var(--zoth-text-2) !important;
   font-family: var(--zoth-font-sans) !important;
+}
+html[data-theme="light"] body {
+  background: #F8F6F0 !important;
+  color: #181612 !important;
+  font-family: var(--zoth-font-sans) !important;
+}
+html[data-theme="light"] {
+  --bg-primary: #F8F6F0 !important;
+  --bg-surface: #FFFFFF !important;
+  --bg-surface-elevated: #F1EFEA !important;
+  --border-color: #DCD6C8 !important;
+  --border-subtle: #E6E1D6 !important;
+  --text-primary: #181612 !important;
+  --text-secondary: #5C5549 !important;
+  --text-tertiary: #7A7264 !important;
 }
 
 /* ---- Zoth brand header strip (injected) ---- */
