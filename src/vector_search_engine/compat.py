@@ -75,7 +75,7 @@ def safe_path_normalization(path: Union[str, Path]) -> Path:
         # Handle empty or whitespace-only paths
         stripped = path.strip()
         if not stripped:
-            return Path.cwd()
+            return Path.cwd().resolve()
         # Handle Termux path prefix if running in Termux
         if "PREFIX" in os.environ and stripped.startswith("$PREFIX"):
             stripped = stripped.replace("$PREFIX", os.environ["PREFIX"], 1)
