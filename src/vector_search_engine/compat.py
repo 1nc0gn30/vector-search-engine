@@ -83,11 +83,14 @@ def safe_path_normalization(path: Union[str, Path]) -> Path:
 
     expanded = path.expanduser()
     try:
-        # Resolve to absolute path
-        return expanded.resolve()
+        # Resolve to absolute path (handle Windows Python 3.9 non-existent relative paths)
+        resolved = expanded.resolve()
+        if not resolved.is_absolute():
+            resolved = Path(os.path.abspath(str(expanded)))
+        return resolved
     except (RuntimeError, PermissionError, OSError):
         # Fallback to absolute if resolve fails (e.g. symlink loop or restricted permissions)
-        return expanded.absolute()
+        return Path(os.path.abspath(str(expanded)))
 
 
 def safe_ensure_dir(path: Union[str, Path]) -> Path:
