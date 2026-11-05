@@ -2652,6 +2652,22 @@
     <div class="zoth-foot-name">Vector Studio v2.5.0</div>
     <div>Engineered by 1nc0gn30 • NullAI (<a href="https://github.com/1nc0gn30/vector-search-engine" target="_blank" rel="noopener" style="color:var(--g-blue); text-decoration:none;">@1nc0gn30</a>) &bull; <a href="https://nullai.tech" target="_blank" rel="noopener" style="color:var(--text-secondary); text-decoration:none;">NullAI Platform</a></div>
   </footer>
-  <script src="/assets/sovereign-upgrade.js" defer></script>
+  
+
+  <script src="/sovereign_tutorial.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      if (window.createSovereignTutorial) {
+        window.createSovereignTutorial({
+          toolId: "vector-search-engine",
+          toolName: "Vector Search Engine & Studio",
+          tagline: "Zero-latency in-browser HNSW vector index for semantic similarity search!",
+          accentColor: "#38BDF8",
+          steps: [{"icon": "\ud83e\udde0", "title": "What are Vector Embeddings?", "desc": "Turns text and ideas into numbers (vectors) so the computer can understand meaning rather than just exact keywords!"}, {"icon": "\u26a1", "title": "Instant Semantic Search", "desc": "Search through thousands of documents in milliseconds using HNSW (Hierarchical Navigable Small World) graphs."}, {"icon": "\ud83d\udd12", "title": "100% In-Browser & Local", "desc": "Runs completely inside your browser with zero data ever sent to an external embedding server."}]
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>
