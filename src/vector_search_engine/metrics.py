@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 import random
 import struct
-from typing import Any, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 from vector_search_engine.models import DistanceMetric
 
