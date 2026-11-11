@@ -1,437 +1,258 @@
 <div align="center">
-  <img src="assets/hero-banner.svg" alt="Vector Search Engine &amp; Studio — Sovereign Architecture Banner" width="100%" />
+  <img src="assets/hero-banner.svg" alt="Vector Search Engine &amp; Studio Banner" width="100%" />
 </div>
 
-<br />
+# Vector Search Engine & Studio
 
-# 🔍 Vector Search Engine & Vector Studio
-
-[![Live App](https://img.shields.io/badge/Live%20Studio-vectorsearch.nullai.tech-00E5FF.svg)](https://vectorsearch.nullai.tech)
-[![CI](https://github.com/NullAITech/vector-search-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/NullAITech/vector-search-engine/actions/workflows/ci.yml)
+[![CI](https://github.com/1nc0gn30/vector-search-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/1nc0gn30/vector-search-engine/actions/workflows/ci.yml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Dependencies: Zero](https://img.shields.io/badge/dependencies-0-success.svg)](pyproject.toml)
-[![MCP Server](https://img.shields.io/badge/MCP-Protocol%202024--11--05-blueviolet.svg)](src/vector_search_engine/mcp_server.py)
-[![Monetization: Stripe + Solana](https://img.shields.io/badge/Checkout-$0%20Founding%20Lifetime-14F195.svg)](https://buy.stripe.com/7sI7sA8hM2X8eFG8ww)
+[![Zoth Studio Dossier](https://img.shields.io/badge/Zoth%20Studio-Dossier-D4AF37.svg)](https://zoth.nullai.tech/tools/vector-search-engine)
 
-A production-grade, **pure Python standard library (zero external runtime dependencies)** vector database and approximate nearest neighbor (ANN) search engine featuring **Hierarchical Navigable Small World (HNSW)** graph indexing, **Inverted File (IVF)** clustering, **Okapi BM25** lexical retrieval, **Hybrid Search** with **Reciprocal Rank Fusion (RRF)**, **Model Context Protocol (MCP)** server integration for AI assistants, and **100% in-browser Vector Studio** interactive web UI (with zero backend dependencies on Netlify).
+Pure Python standard-library vector database and approximate nearest neighbor (ANN) search engine with zero external runtime dependencies. Combines Hierarchical Navigable Small World (HNSW) skip-graphs, Inverted File (IVF) Voronoi partitioning, Product/Scalar/Binary quantization, Okapi BM25 lexical retrieval, Reciprocal Rank Fusion (RRF) hybrid search, Maximal Marginal Relevance (MMR) diversification, K-Means++/hierarchical clustering with silhouette cohesion, a JSON-RPC 2.0 Model Context Protocol (MCP) server, and an in-browser Vector Studio workstation on loopback port `127.0.0.1:8121`.
 
-**Engineered by 1nc0gn30 • NullAI ([@1nc0gn30](https://github.com/1nc0gn30)) • NullAI Platform**
-
----
-
-## 📑 Table of Contents
-
-- [Key Architectural Features](#-key-architectural-features)
-- [System Architecture](#-system-architecture)
-- [Mathematical Specifications](#-mathematical-specifications)
-  - [Distance & Similarity Metrics](#1-distance--similarity-metrics)
-  - [HNSW Skip-Graph Indexing](#2-hnsw-hierarchical-navigable-small-world)
-  - [IVF Centroid Partitioning](#3-ivf-inverted-file-index)
-  - [Hybrid Search & Fusion Formulas](#4-hybrid-search--fusion-formulas)
-  - [Scalar & Binary Quantization](#5-vector-quantization)
-- [Vector Studio Web UI](#-vector-studio-web-ui)
-- [Model Context Protocol (MCP) Integration](#-model-context-protocol-mcp-integration)
-- [Python API Quickstart](#-python-api-quickstart)
-- [CLI Reference](#-cli-reference)
-- [REST API Endpoints](#-rest-api-endpoints)
-- [Running Tests & Benchmarks](#-running-tests--benchmarks)
+Engineered by **1nc0gn30** ([@1nc0gn30](https://github.com/1nc0gn30), [1nc0gn30.si](https://1nc0gn30.si)) • **NullAI** ([nullai.tech](https://nullai.tech)).
 
 ---
 
-## ⚡ Key Architectural Features
+## Overview
 
-- **Zero Runtime Dependencies**: Built entirely using Python 3.9+ standard library (`math`, `heapq`, `struct`, `http.server`, `json`, `dataclasses`).
-- **Multiple Index Paradigms**:
-  - **Flat Index**: Exact $O(N)$ linear scan brute-force baseline with 100% recall.
-  - **HNSW Index**: Multi-layer skip-graph achieving sub-millisecond logarithmic $O(\log N)$ search latency.
-  - **IVF Index**: Inverted file partitioning using pure Python K-Means++ clustering.
-- **Hybrid Search Engine**: Okapi BM25 inverted index tokenization combined with dense vector representations via Reciprocal Rank Fusion (RRF) and linear $\alpha$ blending.
-- **Complex Metadata Filtering**: MongoDB-style query filtering ($eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $contains, $all, $regex, $exists, $and, $or, $not, $nor).
-- **Dual Persistence Engines**: Human-readable atomic JSON serialization and high-density binary `.vdb` serialization.
-- **Vector Studio UI**: Material 3 inspired visual studio featuring real-time 2D/3D vector space projection, HNSW multi-layer hierarchy graph inspector, hybrid search score lab, and 1-click synthetic benchmark runner.
-- **Model Context Protocol (MCP) Server**: Full JSON-RPC 2.0 stdio server for Claude Desktop, Cursor, Cline, and Antigravity agents.
+- **Zero Runtime Dependencies**: Implemented strictly on the Python 3.9+ standard library (`math`, `heapq`, `struct`, `http.server`, `json`, `dataclasses`, `threading`) and client-side Web APIs.
+- **Dense Vector Indexes**:
+  - `FlatIndex`: Exact $O(N)$ linear scan baseline with 100% recall.
+  - `HNSWIndex`: Multi-layer navigable small-world skip-graph with heuristic edge pruning (Malkov & Yashunin Algorithm 4) for logarithmic $O(\log N)$ ANN search.
+  - `IVFIndex`: K-Means++ Voronoi centroid partitioning with configurable `nlist` and `nprobe`.
+- **Hybrid Search & Diversity**: Tokenized Okapi BM25 inverted postings fused with dense vector rankings via Reciprocal Rank Fusion ($k=60$) or min-max normalized linear $\alpha$-blending, plus Maximal Marginal Relevance (`diverse_query`) to penalize near-duplicate results.
+- **Structured Metadata Filtering**: Declarative filter evaluation supporting `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$contains`, `$all`, `$regex`, `$exists`, `$and`, `$or`, `$not`, and `$nor`.
+- **Quantization & Persistence**: Scalar 8-bit (`SQ8`), 1-bit packed binary, and subspace Product Quantization (`PQ`), persisted via atomic JSON, JSONL streaming, or binary `.vdb` files.
+- **100% Free & Open Source**: All features, benchmarks, exports, CLI subcommands, and MCP tools are unlocked with zero telemetry or cloud egress. Optional community support is available via [Buy Us a Coffee (Stripe)](https://buy.stripe.com/3cIfZg27PdKo2D64Ocfw40X).
 
 ---
 
-## 🏛️ System Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
-    subgraph ClientInterfaces["Client & Agent Interfaces"]
-        CLI["CLI Tool (vector-search-engine)"]
-        Studio["Vector Studio (Material 3 Inspired UI)"]
-        MCP["Model Context Protocol (MCP Server)"]
-        REST["REST API Server (ThreadingHTTPServer)"]
-        PyAPI["Python Embedded API (VectorCollection)"]
+    subgraph Interfaces["Client & Agent Interfaces"]
+        CLI["CLI (vector-search-engine / vector-search)"]
+        TUI["Unicode Braille TUI (bin/vector-search-engine-tui)"]
+        Studio["Vector Studio UI (127.0.0.1:8121)"]
+        MCP["MCP JSON-RPC 2.0 Server (stdio)"]
+        PyAPI["Python API (VectorCollection)"]
     end
 
-    subgraph CoreEngine["Vector Search Engine Core"]
+    subgraph Core["Vector Search Engine Core"]
         Col["VectorCollection Controller"]
-        MetaFilter["Metadata Filter Engine ($and, $in, $regex)"]
-        
-        subgraph Indexes["Dense Vector Indexes"]
-            Flat["FlatIndex (Exact KNN)"]
-            HNSW["HNSWIndex (Skip-Graph ANN)"]
-            IVF["IVFIndex (K-Means Voronoi)"]
-        end
-
-        subgraph SparseEngine["Sparse Lexical Engine"]
-            BM25["BM25Index (Inverted Postings)"]
-        end
-
-        subgraph Fusion["Hybrid Fusion Engine"]
-            RRF["Reciprocal Rank Fusion (RRF)"]
-            Linear["Normalized Linear Blending (Alpha)"]
-        end
-
-        subgraph Math["Vector Arithmetic & Quantization"]
-            Dist["Distance Metrics (Cosine, L2, Dot, L1, Hamming, Jaccard)"]
-            Quant["Scalar (SQ8) & 1-bit Binary Quantizer"]
-            Proj["Random Projection (2D/3D PCA Approx)"]
-        end
+        Filter["Metadata Filter Evaluator"]
+        Indexes["FlatIndex / HNSWIndex / IVFIndex"]
+        BM25["BM25Index Sparse Postings"]
+        Hybrid["HybridSearchEngine (RRF & Linear Alpha)"]
+        Cluster["K-Means++ & Agglomerative Clustering"]
+        Quant["SQ8 / Binary / Product Quantization"]
     end
 
-    subgraph Persistence["Cross-Platform Storage Layer"]
-        JSONStore["Atomic JSON Serialization"]
-        BinStore["Binary .vdb Packed Format"]
-        Compat["Platform & Atomic I/O Helper"]
+    subgraph Storage["Persistence Layer"]
+        JSONStore["Atomic JSON & JSONL"]
+        BinStore["Packed Binary (.vdb)"]
     end
 
     CLI --> Col
-    Studio --> REST
-    REST --> Col
+    TUI --> Col
+    Studio --> Col
     MCP --> Col
     PyAPI --> Col
-
-    Col --> MetaFilter
+    Col --> Filter
     Col --> Indexes
-    Col --> SparseEngine
-    Col --> Fusion
-    Indexes --> Math
-    Fusion --> Math
-
-    Col --> Persistence
-    Persistence --> Compat
+    Col --> BM25
+    Col --> Hybrid
+    Col --> Cluster
+    Col --> Quant
+    Col --> Storage
 ```
 
----
+### Mathematical Reference
 
-## 📐 Mathematical Specifications
-
-### 1. Distance & Similarity Metrics
-
-| Metric | Formula | Distance Range | Similarity Formula |
-| :--- | :--- | :--- | :--- |
-| **Cosine** | $\cos(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$ | $[0.0, 2.0]$ | $S = 1.0 - D$ |
-| **Euclidean (L2)** | $D_{L2}(\mathbf{u}, \mathbf{v}) = \sqrt{\sum_{i=1}^d (u_i - v_i)^2}$ | $[0.0, \infty)$ | $S = \frac{1}{1 + D}$ |
-| **Dot Product** | $\mathbf{u} \cdot \mathbf{v} = \sum_{i=1}^d u_i v_i$ | $(-\infty, \infty)$ | $S = -D$ |
-| **Manhattan (L1)** | $D_{L1}(\mathbf{u}, \mathbf{v}) = \sum_{i=1}^d \|u_i - v_i\|$ | $[0.0, \infty)$ | $S = \frac{1}{1 + D}$ |
-| **Hamming** | $D_{\text{Hamming}}(\mathbf{u}, \mathbf{v}) = \frac{1}{d} \sum_{i=1}^d \mathbb{I}(u_i \neq v_i)$ | $[0.0, 1.0]$ | $S = 1.0 - D$ |
-| **Jaccard** | $J(\mathbf{u}, \mathbf{v}) = \frac{\sum \min(u_i, v_i)}{\sum \max(u_i, v_i)}$ | $[0.0, 1.0]$ | $S = 1.0 - D$ |
+| Component | Formulation |
+| :--- | :--- |
+| **Cosine Distance** | $D_{\cos}(\mathbf{u}, \mathbf{v}) = 1 - \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2} \in [0, 2]$ |
+| **Euclidean (L2)** | $D_{L2}(\mathbf{u}, \mathbf{v}) = \sqrt{\sum_{i=1}^d (u_i - v_i)^2}$ |
+| **Manhattan / Dot / Hamming / Jaccard** | Supported natively in `vector_search_engine.metrics` |
+| **HNSW Layer Sampling** | $l = \min(\lfloor -\ln(\text{Uniform}(0,1)) / \ln(M) \rfloor, L_{\max}-1)$ |
+| **Okapi BM25** | $\sum_{q_i \in Q} \ln\left(1 + \frac{N - n(q_i) + 0.5}{n(q_i) + 0.5}\right) \frac{f(q_i, D)(k_1 + 1)}{f(q_i, D) + k_1(1 - b + b \cdot |D| / \text{avgdl})}$ |
+| **Reciprocal Rank Fusion** | $\text{RRF}(d) = \frac{1}{60 + r_{\text{dense}}(d)} + \frac{1}{60 + r_{\text{sparse}}(d)}$ |
+| **Silhouette Score** | $s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]$ |
 
 ---
 
-### 2. HNSW (Hierarchical Navigable Small World)
+## Quickstart
 
-HNSW structures vector items into a hierarchy of proximity graphs $\mathcal{G} = \{G_0, G_1, \dots, G_{L_{\max}}\}$.
-
-#### Node Layer Assignment
-The maximum layer $l$ of a newly inserted node is drawn from an exponential distribution controlled by multiplier $m_L$:
-
-$$l = \min\left(\left\lfloor -\ln(\text{Uniform}(0, 1)) \cdot m_L \right\rfloor, L_{\max} - 1\right), \quad m_L = \frac{1}{\ln(M)}$$
-
-#### Routing & Traversal
-1. **Top-Down Greedy Routing** ($l = L_{\max} \dots l_{\text{insert}} + 1$): From entry point $v_{\text{entry}}$, greedily hop to neighbor $u \in \text{adj}(v)$ minimizing $D(\mathbf{q}, \mathbf{u})$ until a local minimum is reached.
-2. **Layer Construction & Search** ($l = \min(L_{\max}, l_{\text{insert}}) \dots 0$): Beam search maintains candidate min-heap $C$ and dynamic nearest neighbor max-heap $W$ of size $ef$.
-3. **Heuristic Pruning (Malkov & Yashunin Algorithm 4)**: Keeps candidates closer to query $\mathbf{q}$ than to any previously selected neighbor, ensuring diverse geometric connectivity.
-
----
-
-### 3. IVF (Inverted File) Index
-
-IVF partitions space into $K = \text{nlist}$ Voronoi cells around centroids $\{\mathbf{c}_1, \dots, \mathbf{c}_K\}$:
-1. **K-Means++ Initialization**: Selects initial seeds with probability proportional to squared Euclidean distance $D^2(\mathbf{x})$.
-2. **Lloyd's Clustering**: Iteratively assigns items to nearest centroids and updates centroids $\mathbf{c}_k = \frac{1}{|S_k|} \sum_{\mathbf{x} \in S_k} \mathbf{x}$.
-3. **$nprobe$ Search**: Queries only the $nprobe \ll K$ nearest posting lists to reduce vector comparisons by $90\%+$.
-
----
-
-### 4. Hybrid Search & Fusion Formulas
-
-#### Okapi BM25 Lexical Ranking
-Given document $D$ and query terms $Q = \{q_1, \dots, q_m\}$:
-
-$$\text{IDF}(q_i) = \ln\left(1 + \frac{N - n(q_i) + 0.5}{n(q_i) + 0.5}\right)$$
-
-$$\text{Score}_{\text{BM25}}(D, Q) = \sum_{i=1}^m \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
-
-where default parameters are $k_1 = 1.5, b = 0.75$.
-
-#### Reciprocal Rank Fusion (RRF)
-Combines dense rank $r_{\text{dense}}(d)$ and sparse rank $r_{\text{sparse}}(d)$:
-
-$$\text{RRF}(d) = \frac{1}{k + r_{\text{dense}}(d)} + \frac{1}{k + r_{\text{sparse}}(d)}, \quad k = 60$$
-
-#### Normalized Linear Alpha Blending
-Min-Max normalized linear interpolation:
-
-$$\text{Score}_{\text{linear}}(d) = \alpha \cdot \text{Norm}(\text{Score}_{\text{dense}}(d)) + (1 - \alpha) \cdot \text{Norm}(\text{Score}_{\text{sparse}}(d))$$
-
----
-
-### 5. Vector Quantization
-
-- **Scalar Quantization (SQ8)**: Compresses 32-bit floats into 8-bit unsigned integers:
-  
-  $$\tilde{x}_i = \left\lfloor \frac{x_i - \min(\mathbf{x})}{\max(\mathbf{x}) - \min(\mathbf{x})} \cdot 255 \right\rceil$$
-
-- **1-Bit Binary Quantization**: Compresses 8 float signs into 1 packed byte:
-  
-  $$b_i = \mathbb{I}(x_i > 0)$$
-
-### 6. Vector Clustering & Silhouette Cohesion Analysis
-
-- **K-Means++ Seeding**: Probabilistically seeds initial cluster centroids proportionally to squared Euclidean/Cosine distance $D(\mathbf{x})^2$:
-
-  $$P(\mathbf{x}) = \frac{D(\mathbf{x})^2}{\sum_{\mathbf{x}'} D(\mathbf{x}')^2}$$
-
-- **Silhouette Coefficient**: Quantifies cluster compactness vs separation:
-  
-  $$s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1.0, 1.0]$$
-  
-  where $a(i)$ is the mean intra-cluster distance to all other vectors in cluster $C_A$, and $b(i) = \min_{C_B \neq C_A} \text{mean}(\text{dist}(i, C_B))$.
-
-- **Medoid Extraction**: Selects genuine representative exemplar item:
-  
-  $$m^* = \arg\min_{i \in C} \text{dist}(i, \mathbf{c})$$
-
----
-
-## 🎨 Vector Studio Web UI
-
-Vector Studio provides a clean, responsive workspace influenced by Material 3 design:
-
-- **🌌 2D / 3D Vector Space Viewport**: High performance Canvas projection with hover tooltips, metadata coloring, and nearest neighbor trajectory links.
-- **🔍 Live Search Simulator**: Real-time vector and text similarity search with animated percentage score match bars and metadata filtering.
-- **🕸️ HNSW Multi-Layer Inspector**: Interactive layer visualizer with step-through greedy routing animations.
-- **⚖️ Hybrid & RRF Blending Lab**: Live alpha slider ($\alpha \in [0.0, 1.0]$) with side-by-side dense vs BM25 rank comparisons.
-- **⚡ Benchmark Console**: 1-click synthetic performance benchmark comparing HNSW vs Flat brute-force scan.
-
-### Launching the Studio Server
+### Clone and Install
 
 ```bash
-# Start UI server on default port 8000
-python -m vector_search_engine.ui_server
-
-# Or using the CLI
-vector-search serve --port 8000 --open
+git clone https://github.com/1nc0gn30/vector-search-engine.git
+cd vector-search-engine
+python3 -m pip install -e ".[dev]"
 ```
 
-Visit `http://localhost:8000` in your web browser.
+### Launch Local Workstation (`127.0.0.1:8121`)
 
----
+```bash
+# Lightweight static + telemetry workbench on 127.0.0.1:8121
+python3 server.py --host 127.0.0.1 --port 8121
 
-## 🤖 Model Context Protocol (MCP) Integration
-
-The built-in MCP server enables AI agents (Claude Desktop, Cursor, Cline, Antigravity) to manage vector collections and execute similarity queries over stdio.
-
-### Claude Desktop Configuration
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "vector-search-engine": {
-      "command": "python",
-      "args": ["-m", "vector_search_engine.mcp_server", "--data-dir", "/path/to/vector_store"]
-    }
-  }
-}
+# Full REST API + Vector Studio UI server on 127.0.0.1:8121
+python3 -m vector_search_engine.cli serve --host 127.0.0.1 --port 8121
 ```
 
-### Cursor & Cline MCP Setup
+Open `http://127.0.0.1:8121` in your browser, or view the Zoth Studio v2 dossier at [`https://zoth.nullai.tech/tools/vector-search-engine`](https://zoth.nullai.tech/tools/vector-search-engine).
 
-```json
-{
-  "name": "vector-search-engine",
-  "command": "vector-search",
-  "args": ["mcp", "--data-dir", "./.vector_store"]
-}
-```
-
-### Registered MCP Tools
-
-- `vector_create_collection`: Create collections with dimension, metric, and index type.
-- `vector_upsert`: Upsert vector items with text document and metadata.
-- `vector_query`: Query top-k nearest neighbors with vector arrays or auto-embedded text.
-- `vector_hybrid_search`: Blend dense vector similarity with sparse BM25 text search.
-- `vector_collection_stats`: Get collection and graph structural telemetry.
-- `vector_list_collections`: List all active collections.
-- `vector_embed_text`: Generate deterministic dense embeddings from raw text.
-- `vector_quantize`: Compress vectors using SQ8 or 1-bit binary quantization.
-- `vector_diagnostics`: Run system and engine diagnostics.
-
----
-
-## 🚀 Python API Quickstart
+### Python Embedded Usage
 
 ```python
 from vector_search_engine import (
-    VectorCollection,
     CollectionConfig,
     DistanceMetric,
-    IndexType,
     HNSWConfig,
+    IndexType,
+    VectorCollection,
     VectorItem,
 )
 
-# 1. Configure and initialize collection
 config = CollectionConfig(
-    name="ai_knowledge_base",
+    name="knowledge_base",
     dimension=4,
     metric=DistanceMetric.COSINE,
     index_type=IndexType.HNSW,
     hnsw_config=HNSWConfig(m=16, ef_construction=64, ef_search=32),
 )
-collection = VectorCollection(config=config)
+col = VectorCollection(config=config)
 
-# 2. Insert items
-collection.insert(
-    VectorItem(
-        id="doc_1",
-        vector=[0.95, 0.1, 0.2, 0.05],
-        document="Attention Is All You Need: Transformer neural network architecture",
-        metadata={"category": "ai", "year": 2017},
-    )
-)
-collection.insert(
-    VectorItem(
-        id="doc_2",
-        vector=[0.15, 0.9, 0.3, 0.1],
-        document="Hierarchical Navigable Small World graphs for fast approximate nearest neighbor search",
-        metadata={"category": "database", "year": 2016},
-    )
-)
+col.insert(VectorItem(
+    id="doc_1",
+    vector=[0.95, 0.10, 0.20, 0.05],
+    document="Transformer neural network self-attention architecture",
+    metadata={"topic": "ml", "year": 2017},
+))
+col.insert(VectorItem(
+    id="doc_2",
+    vector=[0.15, 0.90, 0.30, 0.10],
+    document="Hierarchical Navigable Small World approximate nearest neighbor graphs",
+    metadata={"topic": "systems", "year": 2018},
+))
 
-# 3. Dense Vector Query with Metadata Filter
-results = collection.query(
-    query_vector=[0.9, 0.1, 0.2, 0.05],
-    k=2,
-    filter_expr={"year": {"$gte": 2016}},
-)
-for r in results:
-    print(f"ID: {r.id}, Similarity Score: {r.score:.4f}, Document: {r.document}")
-
-# 4. Hybrid Search (Dense + BM25 with RRF)
-hybrid_results = collection.hybrid_search(
-    query_vector=[0.9, 0.1, 0.2, 0.05],
-    query_text="transformer architecture",
-    k=2,
-    fusion_method="rrf",
-)
-
-# 5. Save to disk (JSON or fast Binary .vdb)
-collection.save_to_disk("ai_knowledge_base.vdb", format="binary")
+dense_hits = col.query([0.90, 0.10, 0.20, 0.05], k=2, filter_expr={"year": {"$gte": 2017}})
+hybrid_hits = col.hybrid_search([0.90, 0.10, 0.20, 0.05], "transformer attention", k=2, fusion_method="rrf")
 ```
 
 ---
 
-## 💻 CLI Reference
+## CLI & MCP Usage
 
-The package provides `vector-search-engine`, `vector-search`, and `vector-engine` command-line tools:
+### CLI Commands (`vector-search-engine` / `vector-search` / `vector-engine`)
 
 ```bash
-# Create a collection
-vector-search create research_papers -d 128 -m cosine -i hnsw
+# Inspect CLI options
+vector-search-engine --help
 
-# Insert document with auto-embedding
-vector-search insert research_papers --id p1 -d "Diffusion models for image synthesis" --meta "year=2024" --embed
+# Create an HNSW collection
+vector-search create papers -d 128 -m cosine -i hnsw
 
-# Query nearest neighbors
-vector-search query research_papers -t "generative models" -k 5
+# Upsert a document with deterministic local text embedding
+vector-search insert papers --id p1 -d "HNSW graph indexing for ANN search" --meta "year=2025" --embed
 
-# Run hybrid search
-vector-search hybrid research_papers "deep learning" -a 0.5 -k 5
+# Query nearest neighbors (human-readable or --json)
+vector-search --json query papers -t "graph indexing" -k 5
 
-# View collection statistics
-vector-search stats research_papers
+# Hybrid dense + Okapi BM25 search
+vector-search hybrid papers "nearest neighbor graph" -a 0.5 -k 5
 
-# Run synthetic performance benchmark
+# Collection stats, diagnostics, and synthetic benchmark
+vector-search stats papers
+vector-search diagnostics
 vector-search benchmark -n 1000 -d 64 -k 10
 
-# Launch Vector Studio UI
-vector-search serve --port 8000
-
-# Start MCP stdio server
-vector-search mcp
+# Serve Vector Studio + REST API on loopback port 8121
+vector-search serve --host 127.0.0.1 --port 8121
 ```
+
+### ZothOS v3.4.0 CLI & Braille TUI Integration
+
+```bash
+# Node/Electron unified launcher (delegates CLI flags or starts web mode on :8121)
+node bin/vector-search.js --help
+node bin/vector-search.js web
+
+# Unicode U+2800 Braille TUI & JSON telemetry
+python3 bin/vector-search-engine-tui --json
+python3 bin/vector-search-engine-tui --benchmark
+```
+
+### Model Context Protocol (MCP) Server
+
+Start the stdio JSON-RPC 2.0 server (`MCP Protocol 2024-11-05`):
+
+```bash
+vector-search mcp --data-dir ./.vector_store
+# or directly:
+python3 -m vector_search_engine.mcp_server --data-dir ./.vector_store
+```
+
+Registered MCP tools:
+- `vector_create_collection` — Create a collection with dimension, distance metric, and index type (`flat`, `hnsw`, `ivf`).
+- `vector_upsert` — Upsert items with explicit vectors or auto-embedded document text and metadata.
+- `vector_query` — Query top-$k$ nearest neighbors with metadata filters.
+- `vector_hybrid_search` — Execute dense + sparse BM25 search with RRF or linear $\alpha$ fusion.
+- `vector_embed_text` — Compute deterministic dense embeddings from input text.
+- `vector_quantize` — Quantize float vectors using `sq8` or `binary` compression.
+- `vector_collection_stats` — Retrieve collection counts, memory footprint, and HNSW layer counts.
+- `vector_list_collections` — Enumerate active collections in the registry.
+- `vector_diagnostics` — Return platform, Python runtime, and collection telemetry.
+- `vector_cluster_analysis` — Run K-Means++ or hierarchical clustering with silhouette scores and medoid extraction.
 
 ---
 
-## 🌐 REST API Endpoints
+## REST API Endpoints
+
+When running `vector-search serve --host 127.0.0.1 --port 8121` (or `python3 -m vector_search_engine.ui_server --port 8121`):
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/health` | Service health and uptime |
-| `GET` | `/api/diagnostics` | Platform and memory diagnostics |
-| `GET` | `/api/collections` | List all active collections |
-| `POST` | `/api/collections` | Create a new collection |
-| `GET` | `/api/collections/<name>` | Get collection info and schema |
-| `DELETE` | `/api/collections/<name>` | Delete a collection |
-| `POST` | `/api/collections/<name>/insert` | Insert documents/vectors |
-| `POST` | `/api/collections/<name>/query` | Execute dense vector search |
-| `POST` | `/api/collections/<name>/hybrid` | Execute hybrid dense + BM25 search |
-| `GET` | `/api/collections/<name>/stats` | Detailed collection & HNSW stats |
-| `GET` | `/api/collections/<name>/items` | Get items for 2D/3D visualization |
-| `GET` | `/api/collections/<name>/clusters` | Get K-Means/hierarchical cluster analysis |
-| `POST` | `/api/collections/<name>/clusters` | Execute clustering & silhouette cohesion analysis |
-| `POST` | `/api/benchmark` | Execute synthetic HNSW vs Flat benchmark |
+| `GET` | `/health`, `/api/health` | Service status, version, and uptime |
+| `GET` | `/api/diagnostics` | Runtime platform info, collection count, and total indexed vectors |
+| `GET` | `/api/collections` | List all collections with dimension, metric, index type, and memory bytes |
+| `POST` | `/api/collections` | Create a collection (`name`, `dimension`, `metric`, `index_type`) |
+| `GET` | `/api/collections/<name>` | Retrieve collection configuration and stats |
+| `DELETE` | `/api/collections/<name>` | Delete a collection from the registry |
+| `POST` | `/api/collections/<name>/insert` | Batch-upsert documents and vectors |
+| `POST` | `/api/collections/<name>/query` | Run dense vector similarity search with optional metadata filter |
+| `POST` | `/api/collections/<name>/hybrid` | Run hybrid dense + BM25 search (`alpha`, `fusion_method`) |
+| `GET` | `/api/collections/<name>/stats` | Detailed collection and index structure telemetry |
+| `GET` | `/api/collections/<name>/items` | Export stored items for 2D/3D canvas projection |
+| `GET` / `POST` | `/api/collections/<name>/clusters` | Run K-Means++ or hierarchical clustering and silhouette analysis |
+| `POST` | `/api/benchmark` | Execute synthetic HNSW vs Flat latency, QPS, and recall@k benchmark |
+
+ Note: `server.py --port 8121` serves the standalone `public/` workstation along with `GET /health` and `GET /api/stats`. Mutating `POST`/`DELETE` routes in `ui_server.py` enforce local-origin CSRF protection (`127.0.0.1`, `localhost`, `::1`).
 
 ---
 
-## 🧪 Running Tests & Benchmarks
+## Testing & Verification
 
 ```bash
-# Run complete unit and integration test suite
-pytest -v tests/
+# Run full unit and integration test suite (110 tests)
+python3 -m pytest -q
 
-# Run CLI smoke tests
-python -m vector_search_engine.cli test
+# Verify CLI & TUI entrypoints
+python3 -m vector_search_engine.cli --help
+python3 -m vector_search_engine.cli --json diagnostics
+python3 bin/vector-search-engine-tui --json
 
-# Run synthetic benchmark
-python -m vector_search_engine.cli benchmark -n 1000 -d 64
+# Secret & PII scan
+gitleaks detect --source . --no-banner --redact
 ```
 
 ---
 
-## 📄 License
+## License
 
-MIT License © 2026 Vector Search Engine Architecture Contributors.
-
----
-
-## 🏛️ ZothOS v3.4, Zoth Studio v2 & Obsidian Second Brain Ecosystem
-
-### Cross-Surface Integration Matrix
-
-| Surface | Endpoint / Binary | Capabilities |
-| :--- | :--- | :--- |
-| **Standalone Workstation** | `http://127.0.0.1:3000` | 100% Free & Open-Access Web Deck, live `/health` & REST telemetry |
-| **Zoth Studio v2 Route** | `http://127.0.0.1:3000/tools/vector-search-engine` | Interactive God-Mode component inside Zoth Studio (`https://zoth.nullai.tech`) |
-| **ZothOS v3.4 CLI & TUI** | `vector-search-engine` / `vector-search-engine-tui` | Global binary in `/usr/local/bin/` with Unicode `U+2800` Braille TUI & `--json` output |
-| **ZothOS-Lite Web Desktop** | `http://127.0.0.1:8145` | Browser-native KDE-style window manager & terminal launcher |
-| **Zoth Obsidian Tracker** | `http://127.0.0.1:8151` | Interactive Obsidian Second Brain vault explorer (`~/Documents/Obsidian Vault/Studio/Tools/Studio vector-search-engine.md`) |
-| **Neuro-Memory STDP Cortex** | `http://127.0.0.1:8094` | 3-Factor STDP synaptic memory daemon & 21-tool MCP server |
-
-```bash
-# Inspect CLI & Unicode U+2800 Braille TUI on ZothOS v3.4
-vector-search-engine --help
-vector-search-engine-tui --status
-vector-search-engine-tui --json
-
-# Verify Second Brain Vault & 12-Step Verification Gallery on :8151
-zoth-obsidian-tracker --verify
-```
-
+MIT License. Copyright (c) 2026 1nc0gn30 & NullAI. See `pyproject.toml` and repository headers for details.

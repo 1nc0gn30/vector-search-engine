@@ -844,53 +844,7 @@
       color: #D4AF37;
     }
 
-    /* Output Paywall Blurs */
-    .paywall-wrap {
-      position: relative;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-    .paywall-wrap.locked #searchResultsDeck,
-    .paywall-wrap.locked #blendedRankDeck,
-    .paywall-wrap.is-locked #searchResultsDeck,
-    .paywall-wrap.is-locked #blendedRankDeck {
-      filter: blur(6px);
-      user-select: none;
-      pointer-events: none;
-    }
-    .paywall-overlay {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: rgba(19, 19, 20, 0.75);
-      backdrop-filter: blur(4px);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      text-align: center;
-      padding: 1rem;
-      z-index: 20;
-    }
-    .paywall-wrap.locked .paywall-overlay,
-    .paywall-wrap.is-locked .paywall-overlay {
-      display: flex;
-    }
-    .paywall-overlay-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #F5E6AB;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-    .paywall-overlay-desc {
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      max-width: 320px;
-    }
-
-    /* Pro Paywall Modal */
+    /* Modal Backdrop */
     .pro-modal-backdrop {
       display: none;
       position: fixed;
@@ -1038,11 +992,10 @@
 <body>
 <div class="zoth-brand-bar"><span class="zoth-z">Z</span><span class="zoth-name">Zoth Studio</span><span class="zoth-tool">Vector Search Engine</span><span class="zoth-spacer"></span><span class="zoth-badge">NULLAI · SOVEREIGN</span></div>
 
-<!-- 100% Open-Access Coffee & Solana Support Bar -->
+<!-- 100% Open-Access Support Bar -->
 <div id="zoth-coffee-support-bar" style="background: linear-gradient(90deg, rgba(16,185,129,0.12), rgba(212,175,55,0.14)); border-bottom: 1px solid rgba(212,175,55,0.35); padding: 8px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; z-index: 9999;">
-  <span style="color: #10B981; font-weight: 800;">✦ 100% FREE &amp; OPEN ACCESS · ZERO PAYWALLS</span>
-  <a href="https://buy.stripe.com/3cIfZg27PdKo2D64Ocfw40X" target="_blank" rel="noopener noreferrer" style="background: #D4AF37; color: #08080B; padding: 4px 12px; border-radius: 6px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">☕ Buy Us a Coffee (Stripe)</a>
-  <a href="solana:GG2eQbVh8ut1BK6j1A2tz7pSySdLpD38BgyEhGcxdXoK" onclick="if(navigator.clipboard){navigator.clipboard.writeText('GG2eQbVh8ut1BK6j1A2tz7pSySdLpD38BgyEhGcxdXoK');this.textContent='✓ Copied GG2eQb...dXoK!';}" style="background: rgba(20,241,149,0.15); color: #14F195; border: 1px solid rgba(20,241,149,0.45); padding: 4px 12px; border-radius: 6px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">◎ Solana Tip (GG2e...dXoK)</a>
+  <span style="color: #10B981; font-weight: 800;">✦ 100% FREE &amp; OPEN SOURCE</span>
+  <a href="https://buy.stripe.com/3cIfZg27PdKo2D64Ocfw40X" target="_blank" rel="noopener noreferrer" style="background: #D4AF37; color: #08080B; padding: 4px 12px; border-radius: 6px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">☕ Buy Us a Coffee</a>
 </div>
 
 <!-- Header -->
@@ -1237,7 +1190,7 @@
             </div>
           </div>
 
-          <div id="searchPaywallWrap">
+          <div id="searchResultsWrap">
             <div class="results-deck" id="searchResultsDeck">
               <div style="text-align: center; color: var(--text-tertiary); padding: 40px;">
                 Enter a query or click "Run Search" to simulate similarity search.
@@ -1369,7 +1322,7 @@
         <!-- Blended RRF Rank Column -->
         <div class="card">
           <div class="card-title" style="color: var(--g-green);">3. Blended Fusion Rank</div>
-          <div id="hybridPaywallWrap">
+          <div id="hybridResultsWrap">
             <div class="results-deck" id="blendedRankDeck" style="max-height: 450px;"></div>
           </div>
         </div>
@@ -2613,8 +2566,7 @@
       }).join('');
     }
 
-    /* ---- License & Paywall Management ---- */
-    let isPro = false;
+    /* ---- UI Utilities ---- */
 
     function showToast(msg, type = 'info') {
       let toast = document.getElementById('toast');

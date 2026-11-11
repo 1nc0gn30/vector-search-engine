@@ -9,7 +9,7 @@ description = "Pure Python zero-dependency vector search engine with HNSW, IVF, 
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Vector Search Engine Contributors"}
+    {name = "1nc0gn30"}
 ]
 keywords = [
     "vector-search",
@@ -64,10 +64,10 @@ vector-search = "vector_search_engine.cli:main"
 vector-engine = "vector_search_engine.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/example/vector-search-engine"
-Documentation = "https://github.com/example/vector-search-engine#readme"
-Repository = "https://github.com/example/vector-search-engine.git"
-Issues = "https://github.com/example/vector-search-engine/issues"
+Homepage = "https://github.com/1nc0gn30/vector-search-engine"
+Documentation = "https://github.com/1nc0gn30/vector-search-engine#readme"
+Repository = "https://github.com/1nc0gn30/vector-search-engine.git"
+Issues = "https://github.com/1nc0gn30/vector-search-engine/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

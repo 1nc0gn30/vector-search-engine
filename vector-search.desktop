@@ -5,7 +5,7 @@ Name=Vector Studio
 GenericName=HNSW Vector Database & Search Engine
 Comment=Zero-Dependency HNSW & IVF Vector Database, BM25 Hybrid Search, MMR Diversity & Clustering
 Exec=/usr/local/bin/vector-search desktop
-Icon=/media/neo/f2fdda77-178b-4603-ae80-c7aa4cd97908/zoth-micro-repos/vector-search-engine/assets/icon.png
+Icon=vector-search
 Terminal=false
 Categories=Development;Database;System;Utility;
 StartupNotify=true
@@ -16,5 +16,5 @@ Name=Open Vector CLI
 Exec=x-terminal-emulator -e "/usr/local/bin/vector-search --help"
 
 [Desktop Action Web]
-Name=Open Web UI (Port 8093)
+Name=Open Web UI (Port 8121)
 Exec=/usr/local/bin/vector-search web
